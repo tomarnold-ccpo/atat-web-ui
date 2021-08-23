@@ -39,6 +39,8 @@
         :value="value"
         hide-details="auto"
         @keyup="$emit('update:value', $event.target.value)"
+        @blur="$emit('blur', $event.target.value)"
+        @focus="$emit('focus', $event.target.value)"
       >
       </v-text-field>
     </v-flex>
