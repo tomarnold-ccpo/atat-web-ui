@@ -37,7 +37,7 @@
         .v-date-picker-header__value{
           button{
             @extend .font-weight-700;
-            // pointer-events: none;
+            pointer-events: none;
             color: $base_darkest;
             &:hover{
               color: $base_darkest;

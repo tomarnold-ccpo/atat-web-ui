@@ -122,7 +122,6 @@ export default class PostReview extends Vue {
   // this store change will only be triggered by the wizard buttons next/previous
   @Watch("wizardNavigation")
   async onNextStepChanged(navigation: WizardNavigation): Promise<void> {
-    debugger;
     this.$router.push({ name: navigation.step });
   }
 

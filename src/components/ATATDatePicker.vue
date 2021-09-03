@@ -177,8 +177,7 @@ export default class ATATDatePicker extends Vue {
 
   private blurTextField(): void {
     this.getSelectedDate(this._date);
-    this.getErrorMessages;
-    setTimeout(() => (this.menu = false), 2000);
+    this.getErrorMessages();
   }
 
   @Watch("firstMonth")

@@ -181,12 +181,12 @@
                 </v-row>
                 <v-row>
                   <v-col cols="11">
-                    <div class="h4 font-weight-bold mt-6">
+                    <div class="h4 font-weight-bold my-6">
                       Period of Performance (PoP)
                     </div>
                     <div class="ma-0">
                       <v-row class="d-flex align-center pt-3">
-                        <v-col cols="6">
+                        <v-col cols="6" class="py-0">
                           <label
                             :id="'start_date_text_field_label'"
                             class="form-field-label my-1 font-weight-bold"
@@ -195,7 +195,7 @@
                             Start Date
                           </label>
                         </v-col>
-                        <v-col cols="6">
+                        <v-col cols="6" class="py-0">
                           <label
                             :id="'end_date_text_field_label'"
                             class="form-field-label my-1 font-weight-bold"
@@ -207,7 +207,7 @@
                       </v-row>
                       <v-row
                         v-if="datePickerErrorMessages.length > 0"
-                        class="mt-0"
+                        class="mt-3"
                       >
                         <v-col ool="!2" class="py-0">
                           <div
@@ -452,13 +452,16 @@ export default class ClinsCard extends Vue {
 
   get popStartRules(): any[] {
     const validationRules = [];
-    if (this._pop_start_date !== "") {
-      validationRules.push(
-        (v: string) =>
-          /([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))$/.test(v) ||
-          "Invalid Date"
+    let startDateIsValid =
+      /([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))$/.test(
+        this._pop_start_date
+      );
+    let endDateIsValid =
+      /([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))$/.test(
+        this._pop_end_date
       );
 
+    if (this._pop_start_date !== "") {
       validationRules.push(
         (v: string) =>
           v !== "" ||
@@ -466,19 +469,20 @@ export default class ClinsCard extends Vue {
       );
       validationRules.push(
         (v: string) =>
-          Date.parse(v) > 0 ||
+          (startDateIsValid && Date.parse(v) > 0) ||
           "Please enter a start date using the format 'YYYY-MM-DD'"
       );
       validationRules.push(
         (v: string) =>
-          Date.parse(v) < Date.parse(this._pop_end_date) ||
-          "The PoP start date must be before the end date"
-      );
-      validationRules.push(
-        (v: string) =>
-          v !== "" ||
           Date.parse(v) < Date.parse(this.JWCCContractEndDate) ||
           "The start date must be before or on " + this.JWCCContractEndDate
+      );
+    }
+    if (startDateIsValid && endDateIsValid) {
+      validationRules.push(
+        (v: string) =>
+          Date.parse(v) < Date.parse(this._pop_end_date) ||
+          "The PoP start date must be before the end date"
       );
     }
     return validationRules;
@@ -486,31 +490,40 @@ export default class ClinsCard extends Vue {
 
   get popEndRules(): any[] {
     const validationRules = [];
-    if (this._pop_end_date !== "") {
+    let startDateIsValid =
+      /([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))$/.test(
+        this._pop_start_date
+      );
+    let endDateIsValid =
+      /([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))$/.test(
+        this._pop_end_date
+      );
+      debugger;
+      
+    if (!endDateIsValid) {
       validationRules.push(
         (v: string) =>
-          !!v ||
+          v !== "" ||
           "Please enter the end date for your CLIN's period of performance"
       );
       validationRules.push(
         (v: string) =>
-          /([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))$/.test(v) ||
-          "Invalid Date"
-      );
-      validationRules.push(
-        (v: string) =>
-          Date.parse(v) > 0 ||
+          (endDateIsValid) ||
           "Please enter an end date using the format 'YYYY-MM-DD'"
-      );
-      validationRules.push(
-        (v: string) =>
-          Date.parse(v) > Date.parse(this._pop_start_date) ||
-          "The PoP end date must be before the start date"
       );
       validationRules.push(
         (v: string) =>
           Date.parse(v) < Date.parse(this.JWCCContractEndDate) ||
           "The end date must be before or on " + this.JWCCContractEndDate
+      );
+    }
+    // if (endDateIsValid)
+
+    if (startDateIsValid && endDateIsValid) {
+      validationRules.push(
+        (v: string) =>
+          Date.parse(v) > Date.parse(this._pop_start_date) ||
+          "The PoP end date must be before the start date"
       );
     }
     return validationRules;

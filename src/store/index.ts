@@ -85,7 +85,7 @@ export default new Vuex.Store({
     currentStep: step,
     wizardNavigation: {},
     selectedCSP: "CSP 1",
-    erroredSteps: [1,2,3, 4],
+    erroredSteps: [1, 2, 3, 4],
   },
   mutations: {
     changeLoginStatus(state, status: boolean) {
@@ -94,8 +94,8 @@ export default new Vuex.Store({
     changeisUserAuthorizedToProvisionCloudResources(state, status: boolean) {
       state.isUserAuthorizedToProvisionCloudResources = status;
     },
-    setStepValidated(state, step: number){
-      state.erroredSteps = state.erroredSteps.filter((es)=> es !== step);
+    setStepValidated(state, step: number) {
+      state.erroredSteps = state.erroredSteps.filter((es) => es !== step);
     },
     setWizardStep(state, step: string) {
       const foundStep = wizardList.get(step);
@@ -139,9 +139,9 @@ export default new Vuex.Store({
       commit("changeLoginStatus", false);
       window.sessionStorage.clear();
     },
-    validateStep({commit}, step: number ){ 
+    validateStep({ commit }, step: number) {
       commit("setStepValidated", step);
-    }, 
+    },
     wizardNext({ commit }) {
       commit("setWizardNavigation", "next");
     },
