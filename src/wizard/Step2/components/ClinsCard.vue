@@ -498,8 +498,8 @@ export default class ClinsCard extends Vue {
       /([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))$/.test(
         this._pop_end_date
       );
-      debugger;
-      
+    debugger;
+
     if (!endDateIsValid) {
       validationRules.push(
         (v: string) =>
@@ -508,7 +508,7 @@ export default class ClinsCard extends Vue {
       );
       validationRules.push(
         (v: string) =>
-          (endDateIsValid) ||
+          endDateIsValid ||
           "Please enter an end date using the format 'YYYY-MM-DD'"
       );
       validationRules.push(
