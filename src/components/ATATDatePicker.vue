@@ -1,86 +1,84 @@
 <template>
-  <v-row>
-    <v-col>
-      <v-menu
-        v-model="menu"
-        :close-on-content-click="true"
-        :position-x="0"
-        :position-y="0"
-        origin="top left"
-        :nudge-left="nudgeleft"
-        :nudge-top="40"
-        top
-      >
-        <template v-slot:activator="{ on, attrs }">
-          <div class="d-flex align-start width-70 datepicker-text-box">
-            <v-text-field
-              :ref="id"
-              outlined
-              dense
-              :success="isFieldValid"
-              :error="isFieldValid"
-              :height="42"
-              v-bind="attrs"
-              v-on="on"
-              hide-details
-              placeholder="YYYY-DD-MM"
-              v-model="_date"
-              :value="_date"
-              :rules="_rules"
-              @focus="menu !== false"
-              @blur="blurTextField"
-              @update:error="getErrorMessages"
-            ></v-text-field>
-            <v-btn icon :ripple="false" class="ml-2">
-              <v-icon v-bind="attrs" v-on="on" class="icon-32 black--text"
-                >calendar_today</v-icon
-              >
-            </v-btn>
-          </div>
-        </template>
-        <div class="two-date-pickers pa-6">
-          <div class="h4 pb-7">{{ title }}</div>
-          <hr />
-          <v-date-picker
-            ref="firstMonth"
-            :min="min"
-            :max="max"
-            v-model="_dateRange"
-            :show-current="false"
-            @input="menu = false"
-            class="mr-5 mt-4"
-            range
-            no-title
-            id="firstMonthDatePicker"
-            scrollable
-            tabindex="0"
-            @click:date="getSelectedDate"
-            :reactive="true"
-            :picker-date.sync="firstMonth"
-            transition="false"
-          />
-          <v-date-picker
-            ref="secondMonth"
-            :min="min"
-            :max="max"
-            :show-current="false"
-            v-model="_dateRange"
-            class="ml-5 mt-4"
-            @input="menu = false"
-            range
-            tabindex="0"
-            no-title
-            :reactive="true"
-            @click:date="getSelectedDate"
-            id="secondMonthDatePicker"
-            scrollable
-            :picker-date.sync="secondMonth"
-            transition="false"
-          />
+  <div>
+    <v-menu
+      v-model="menu"
+      :close-on-content-click="false"
+      :position-x="0"
+      :position-y="0"
+      origin="top left"
+      :nudge-left="nudgeleft"
+      :nudge-top="40"
+      top
+    >
+      <template v-slot:activator="{ on, attrs }">
+        <div class="d-flex align-start datepicker-text-box">
+          <v-text-field
+            :ref="id"
+            outlined
+            dense
+            :success="isFieldValid"
+            :error="isFieldValid"
+            :height="42"
+            v-bind="attrs"
+            v-on="on"
+            hide-details
+            placeholder="YYYY-DD-MM"
+            v-model="_date"
+            :value="_date"
+            :rules="_rules"
+            @focus="menu !== false"
+            @blur="blurTextField"
+            @update:error="getErrorMessages"
+          ></v-text-field>
+          <v-btn icon :ripple="false">
+            <v-icon v-bind="attrs" v-on="on" class="icon-32 black--text"
+              >calendar_today</v-icon
+            >
+          </v-btn>
         </div>
-      </v-menu>
-    </v-col>
-  </v-row>
+      </template>
+      <div class="two-date-pickers pa-6">
+        <div class="h4 pb-7">{{ title }}</div>
+        <hr />
+        <v-date-picker
+          ref="firstMonth"
+          :min="min"
+          :max="max"
+          v-model="_dateRange"
+          :show-current="false"
+          @input="menu === true"
+          class="mr-5 mt-4"
+          range
+          no-title
+          id="firstMonthDatePicker"
+          scrollable
+          tabindex="0"
+          @click:date="getSelectedDate"
+          :reactive="true"
+          :picker-date.sync="firstMonth"
+          transition="false"
+        />
+        <v-date-picker
+          ref="secondMonth"
+          :min="min"
+          :max="max"
+          :show-current="false"
+          v-model="_dateRange"
+          class="ml-5 mt-4"
+          @input="menu = false"
+          range
+          tabindex="0"
+          no-title
+          :reactive="true"
+          @click:date="getSelectedDate"
+          id="secondMonthDatePicker"
+          scrollable
+          :picker-date.sync="secondMonth"
+          transition="false"
+        />
+      </div>
+    </v-menu>
+  </div>
 </template>
 
 <script lang="ts">
