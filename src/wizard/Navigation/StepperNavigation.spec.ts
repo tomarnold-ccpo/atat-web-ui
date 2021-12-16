@@ -49,6 +49,7 @@ describe("Testing Stepper Navigation", () => {
         description: "Create Portfolio",
         touched: false,
         valid: true,
+        validated: true,
         model: {
           name: "",
           description: "",
@@ -59,6 +60,7 @@ describe("Testing Stepper Navigation", () => {
       {
         step: 2,
         valid: true,
+        validated: true,
         description: "Add Funding",
         touched: false,
         model: {

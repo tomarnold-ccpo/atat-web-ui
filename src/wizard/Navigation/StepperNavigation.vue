@@ -108,11 +108,16 @@ export default class StepperNavigation extends mixins(WizardModuleData) {
   public isStepComplete(stepNumber: number): boolean {
     const isErroredStep = this.erroredSteps.indexOf(stepNumber) != -1;
     const isTouched = this.isTouched(stepNumber);
-    return !isErroredStep && isTouched;
+    const isValidated = this.isStepValidated(stepNumber);
+    return !isErroredStep && isTouched && isValidated;
   }
 
   public isTouched(stepNumber: number): boolean {
     return this.portfolioSteps[stepNumber].touched;
+  }
+
+  public isStepValidated(stepNumber: number): boolean {
+    return this.portfolioSteps[stepNumber].validated;
   }
 }
 </script>

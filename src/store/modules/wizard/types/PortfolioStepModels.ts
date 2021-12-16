@@ -5,6 +5,7 @@ export interface PortfolioStep {
   description: string;
   touched: boolean;
   valid: boolean;
+  validated: boolean;
   model: any;
 }
 

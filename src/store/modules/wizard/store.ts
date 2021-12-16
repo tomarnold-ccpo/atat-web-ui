@@ -10,6 +10,7 @@ const step1: PortfolioStep = {
   description: "Create Portfolio",
   touched: false,
   valid: false,
+  validated: false,
   model: {
     name: "",
     description: "",
@@ -23,6 +24,7 @@ const step2: PortfolioStep = {
   description: "Add Funding",
   touched: false,
   valid: false,
+  validated: false,
   model: {
     index: 0, //local guid
     task_order_number: "",
@@ -44,6 +46,7 @@ const step3: PortfolioStep = {
   description: "Add Application",
   touched: false,
   valid: false,
+  validated: false,
   model: {},
 };
 
@@ -52,6 +55,7 @@ const step4: PortfolioStep = {
   description: "Add Team Members",
   touched: false,
   valid: false,
+  validated: false,
   model: {},
 };
 
@@ -60,6 +64,7 @@ const step5: PortfolioStep = {
   description: "Review and Submit",
   touched: false,
   valid: false,
+  validated: false,
   model: {},
 };
 

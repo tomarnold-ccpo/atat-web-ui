@@ -27,6 +27,7 @@ const saveStepModel = (
   Vue.set(state.portfolioSteps[stepNumber], "model", model);
   Vue.set(state.portfolioSteps[stepNumber], "valid", valid);
   Vue.set(state.portfolioSteps[stepNumber], "touched", true);
+  Vue.set(state.portfolioSteps[stepNumber], "validated", true);
 
   const es: number[] = state.erroredSteps;
   const erroredStepIndex = es.indexOf(stepNumber);
@@ -45,6 +46,7 @@ const initializeStepModel = (
   Vue.set(state.portfolioSteps[stepNumber], "model", modelCreator());
   Vue.set(state.portfolioSteps[stepNumber], "valid", true);
   Vue.set(state.portfolioSteps[stepNumber], "touched", touched);
+  Vue.set(state.portfolioSteps[stepNumber], "validated", false);
 };
 
 const updateStepModelValidity = (
@@ -53,6 +55,7 @@ const updateStepModelValidity = (
 ): void => {
   Vue.set(state.portfolioSteps[stepNumber], "valid", valid);
   Vue.set(state.portfolioSteps[stepNumber], "touched", true);
+  Vue.set(state.portfolioSteps[stepNumber], "validated", true);
 
   const es: number[] = state.erroredSteps;
   const erroredStepIndex = es.indexOf(stepNumber);
@@ -76,6 +79,7 @@ const initializeSteps = (state: WizardState): void => {
     Vue.set(state.portfolioSteps[stepKey], "model", initializer());
     Vue.set(state.portfolioSteps[stepKey], "valid", true);
     Vue.set(state.portfolioSteps[stepKey], "touched", false);
+    Vue.set(state.portfolioSteps[stepKey], "validated", false);
   });
 
   Vue.set(state, "arrivedFromStep5", false);

@@ -87,8 +87,7 @@
           }
         }
         &.v-stepper__step--error,
-        &.v-stepper__step--error.visited,
-        {
+        &.v-stepper__step--error.visited{
           .v-stepper__step__step{
             background-color: $error-dark !important;
             box-shadow: inset 0px 0px 0px 4px $error-dark;
