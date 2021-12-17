@@ -120,18 +120,22 @@ export default class Step_4 extends Vue {
   public hasPortfolioHadMembersAdded =
     this.$store.getters["applications/portfolioHasHadMembersAdded"];
 
+  protected async setStepTouched(): Promise<void> {
+    await this.$store.dispatch("wizard/setStepTouched", {
+      stepNumber: 4,
+      isTouched: true,
+    });
+  }
+
   public async beforeRouteLeave(
     to: unknown,
     from: unknown,
     next: (n: void) => void
   ): Promise<void> {
+    await this.setStepTouched();
     if (this.hasChanges || this.hasPortfolioHadMembersAdded) {
       try {
         await this.$store.dispatch("wizard/saveStepData", 4);
-        await this.$store.dispatch("wizard/setStepTouched", {
-          stepNumber: 4,
-          isTouched: true,
-        });
       } catch (error) {
         console.log(error);
       }

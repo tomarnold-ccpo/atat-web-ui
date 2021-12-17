@@ -63,6 +63,14 @@
           &.visited .v-stepper__step__step{
             background-color: $primary_darker !important;
             color: #fff !important;
+            box-shadow: inset 0px 0px 0px 4px $primary_darker;
+          }
+
+          &.visited .v-stepper__label{
+            hr{
+              border-color: $primary_darker !important;
+              background-color: $primary_darker !important;
+            }
           }
         }
 

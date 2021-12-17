@@ -270,7 +270,7 @@ export default class SummaryReview extends mixins(ApplicationModuleData) {
   private transformData(applications: any): void {
     const portfolioOperators = this.operators;
     const portfolioOperatorsCount = portfolioOperators.length || 0;
-    const [isPortfolioValid, hasPortfolioOperators] = validateHasAdminOperators(
+    const [isPortfolioValid] = validateHasAdminOperators(
       portfolioOperators,
       applications
     );
@@ -411,18 +411,23 @@ export default class SummaryReview extends mixins(ApplicationModuleData) {
     return this.$store.getters["applications/portfolioHasHadMembersAdded"];
   }
 
+  protected async setStepTouched(): Promise<void> {
+    await this.$store.dispatch("wizard/setStepTouched", {
+      stepNumber: 4,
+      isTouched: true,
+    });
+  }
+
   public async beforeRouteLeave(
     to: unknown,
     from: unknown,
     next: (n: void) => void
   ): Promise<void> {
+    await this.setStepTouched();
+
     if (this.hasChanges() || this.hasPortfolioHadMembersAdded()) {
       try {
         await this.$store.dispatch("wizard/saveStepData", 4);
-        await this.$store.dispatch("wizard/setStepTouched", {
-          stepNumber: 4,
-          isTouched: true,
-        });
       } catch (error) {
         console.log(error);
       }
