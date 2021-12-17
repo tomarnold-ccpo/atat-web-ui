@@ -112,6 +112,7 @@ export default class Wizard extends Vue {
             }
           } catch (error) {
             alert("An error occurred saving portfolio");
+             await this.routerPush({ name: "portfolios" });
           }
 
           break;

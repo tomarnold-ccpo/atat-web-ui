@@ -363,7 +363,7 @@ const loadPortfolioDraft = async (
     dispatch("loadStep3Data", draftId),
   ];
   await Promise.all(loadActions);
-  await dispatch("saveStep4", false);
+  await dispatch("wizard/updateMembersModified", false);
 };
 
 const loadStep1Data = async (

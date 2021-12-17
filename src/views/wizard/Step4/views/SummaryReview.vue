@@ -401,14 +401,38 @@ export default class SummaryReview extends mixins(ApplicationModuleData) {
         applications: this.applications,
       })
     );
+
+    const touched = this.$store.getters["wizard/isStepTouched"](4);
+
+    if (touched && this.hasApplications()) {
+      this.validate();
+    }
   }
 
   private hasChanges(): boolean {
     return this.$store.getters["wizard/membersModified"];
   }
-
   private hasPortfolioHadMembersAdded(): boolean {
     return this.$store.getters["applications/portfolioHasHadMembersAdded"];
+  }
+
+  private hasApplications(): boolean {
+    return this.$store.getters["wizard/hasApplications"];
+  }
+
+  private async validate(): Promise<boolean> {
+    const [isStep4Valid] = (await this.$store.dispatch(
+      "applications/validateAdminOperators",
+      null,
+      { root: true }
+    )) as boolean[];
+
+    await this.$store.dispatch("wizard/updateStepModelValidity", {
+      stepNumber: 4,
+      valid: isStep4Valid,
+    });
+
+    return isStep4Valid;
   }
 
   protected async setStepTouched(): Promise<void> {
@@ -424,6 +448,10 @@ export default class SummaryReview extends mixins(ApplicationModuleData) {
     next: (n: void) => void
   ): Promise<void> {
     await this.setStepTouched();
+
+    if (this.hasApplications()) {
+      await this.validate();
+    }
 
     if (this.hasChanges() || this.hasPortfolioHadMembersAdded()) {
       try {
