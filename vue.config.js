@@ -1,50 +1,23 @@
-// const path = require('path')
-// const HtmlWebPackPlugin = require('html-webpack-plugin')
+const path = require('path');
 const servicenowConfig = require('./servicenow.config')
-// const { merge } = require('webpack-merge');
-
-// const ROOT_PATH = path.join(__dirname, '../')
 
 const DEFAULTS = {
-  ASSET_SIZE_LIMIT: 10000
+  ASSET_SIZE_LIMIT: 244
 }
 const CONFIG = {
   ...DEFAULTS,
   ...servicenowConfig
 }
 
-module.exports = {
-
+const { defineConfig } = require('@vue/cli-service')
+module.exports = defineConfig({
   transpileDependencies: [
     'vuex-module-decorators'
   ],
-
-  // eslint-disable-next-line no-unused-vars
   configureWebpack: (config) => {
     if (process.env.NODE_ENV === 'production') {
-
-      // config.entry = {
-      //   [CONFIG.JS_API_PATH + 'app']: ['./src/main.ts'],
-      // }
-
-      config.optimization = {
-        splitChunks: {
-          cacheGroups: {
-            vendors: {
-              chunks: 'all',
-              minChunks: 1,
-              maxSize: 0,
-              name: 'vendor',
-              test: /([\\/]node_modules[\\/])|(assets\/)/,
-              priority: -10,
-            },
-          },
-        },
-      }
-
-      config.output.filename = 'js/[name]-[hash]-js'
-      config.output.chunkFilename = 'js/[name]-[chunkhash]-js'
-
+      config.output.filename = 'js/[name]-[hash].js'
+      config.output.chunkFilename = 'js/[name]-[chunkhash].js'
     }
   },
   chainWebpack: config => {
@@ -70,40 +43,30 @@ module.exports = {
     }
 
     if (process.env.NODE_ENV === 'production') {
+
       config.module
         .rule("images")
-        .use("url-loader")
-        .loader("url-loader")
-        .tap(options => Object.assign(options, {
-          limit: CONFIG.ASSET_SIZE_LIMIT,
-          fallback: {
-            ...options.fallback,
-            options: {
-              name: 'img/[name]-[hash:6]-[ext]',
-            }
-
+        .set('parser', {
+          dataUrlCondition: {
+            maxSize: CONFIG.ASSET_SIZE_LIMIT
           }
+        }).set('generator', {
 
-        }));
+          filename: 'img/[name]-[hash:6][ext]'
+        });
 
       config.module
-        .rule("fonts")
-        .use("url-loader")
-        .loader("url-loader")
-        .tap(options => Object.assign(options, {
-          limit: CONFIG.ASSET_SIZE_LIMIT,
-          fallback: {
-            ...options.fallback,
-            options: {
-              name: 'other_assets/[name]-[hash:6]-[ext]',
-            }
-
+        .rule("fonts").set('parser', {
+          dataUrlCondition: {
+            maxSize: CONFIG.ASSET_SIZE_LIMIT
           }
+        }).set('generator', {
 
-        }));
+          filename: 'other_assets/[name]-[hash:6][ext]',
+        });
     }
   },
   css: {
     extract: false,
   },
-}
+})

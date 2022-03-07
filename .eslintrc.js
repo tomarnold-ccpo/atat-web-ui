@@ -16,7 +16,8 @@ module.exports = {
     "prettier"
   ],
   parserOptions: {
-    ecmaVersion: "es2020",
+    ecmaVersion: 'es2020',
+    parser: '@typescript-eslint/parser'
   },
   ignorePatterns: ["**/*.min.js",  "**/*.config.js","**/*.postbuild.js"],
   rules: {
