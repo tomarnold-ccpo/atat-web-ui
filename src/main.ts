@@ -5,8 +5,12 @@ import VueRouter from 'vue-router'
 import router from "@/router"
 import store  from "@/store"
 import vuetify from "./plugins/vuetify";
+import VueTelInputVuetify from "vue-tel-input-vuetify/lib";
 
 Vue.use(VueRouter);
+Vue.use(VueTelInputVuetify, {
+  vuetify,
+});
 
 Vue.config.productionTip = false;
 

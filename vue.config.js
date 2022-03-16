@@ -4,7 +4,7 @@ const servicenowConfig = require('./servicenow.config')
 // const { merge } = require('webpack-merge');
 
 // const ROOT_PATH = path.join(__dirname, '../')
-
+const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
 const DEFAULTS = {
   ASSET_SIZE_LIMIT: 10000
 }
@@ -16,7 +16,8 @@ const CONFIG = {
 module.exports = {
 
   transpileDependencies: [
-    'vuex-module-decorators'
+    'vuex-module-decorators',
+    'vue-tel-input-vuetify',
   ],
 
   // eslint-disable-next-line no-unused-vars
@@ -49,6 +50,14 @@ module.exports = {
   },
   chainWebpack: config => {
 
+    config.plugin('VuetifyLoaderPlugin').tap(args => [{
+      match (originalTag, { kebabTag, camelTag, path, component }) {
+        if (kebabTag.startsWith('core-')) {
+          return [camelTag, `import ${camelTag} from '@/components/core/${camelTag.substring(4)}.vue'`]
+        }
+      }
+    }])
+
     let BASE_API_URL = CONFIG.SERVICENOW_INSTANCE;
     BASE_API_URL += BASE_API_URL.endsWith("/") ? "api" : "/api";
 
@@ -71,36 +80,36 @@ module.exports = {
 
     if (process.env.NODE_ENV === 'production') {
       config.module
-        .rule("images")
-        .use("url-loader")
-        .loader("url-loader")
-        .tap(options => Object.assign(options, {
-          limit: CONFIG.ASSET_SIZE_LIMIT,
-          fallback: {
-            ...options.fallback,
-            options: {
-              name: 'img/[name]-[hash:6]-[ext]',
+          .rule("images")
+          .use("url-loader")
+          .loader("url-loader")
+          .tap(options => Object.assign(options, {
+            limit: CONFIG.ASSET_SIZE_LIMIT,
+            fallback: {
+              ...options.fallback,
+              options: {
+                name: 'img/[name]-[hash:6]-[ext]',
+              }
+
             }
 
-          }
-
-        }));
+          }));
 
       config.module
-        .rule("fonts")
-        .use("url-loader")
-        .loader("url-loader")
-        .tap(options => Object.assign(options, {
-          limit: CONFIG.ASSET_SIZE_LIMIT,
-          fallback: {
-            ...options.fallback,
-            options: {
-              name: 'other_assets/[name]-[hash:6]-[ext]',
+          .rule("fonts")
+          .use("url-loader")
+          .loader("url-loader")
+          .tap(options => Object.assign(options, {
+            limit: CONFIG.ASSET_SIZE_LIMIT,
+            fallback: {
+              ...options.fallback,
+              options: {
+                name: 'other_assets/[name]-[hash:6]-[ext]',
+              }
+
             }
 
-          }
-
-        }));
+          }));
     }
   },
   css: {

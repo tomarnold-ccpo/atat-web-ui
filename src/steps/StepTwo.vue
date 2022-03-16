@@ -49,6 +49,7 @@
       </v-row>
       <v-row>
         <v-col>
+          <vue-tel-input-vuetify v-model="phone"></vue-tel-input-vuetify>
           <ATATRadioGroup
             id="DummyATATRadio"
             label="Custom Radio"
@@ -125,6 +126,7 @@ import {Component} from "vue-property-decorator";
 export default class StepTwo extends Vue {
   private show = true;
   private select = null;
+  private phone = ''
   private items = [
     {
       id: "Programming",

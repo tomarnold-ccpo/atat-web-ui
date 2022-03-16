@@ -14,9 +14,7 @@
             https://www.ditco.disa.mil/hq/cor/index.asp<span class="external-link">.</span>
           </a>
         </p>
-
         <common :isACOR="false" />
-
       </v-col>
     </v-row>
   </v-container>
