@@ -129,7 +129,7 @@ export default class ATATAutoComplete extends Vue {
   }
 
   private getIdText(string: string) {
-    return getIdText(string) + "_AutoCompleteOption";
+    return string ? getIdText(string) + "_AutoCompleteOption" : "";
   }
 
 }

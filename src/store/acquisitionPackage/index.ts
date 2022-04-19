@@ -271,7 +271,7 @@ export class AcquisitionPackageStore extends VuexModule {
       return;
     }
 
-    // ContactData.initialize();
+    ContactData.initialize();
     this.setbranchOptions(await ContactData.LoadMilitaryBranches())
 
     const storedSessionData = sessionStorage.getItem(
