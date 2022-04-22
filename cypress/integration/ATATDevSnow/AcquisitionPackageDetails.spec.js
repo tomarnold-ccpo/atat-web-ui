@@ -11,6 +11,8 @@ describe("Test suite: Acquisition Package ", () => {
     let projectDetails;
     let orgAddressType;
     let contactInfo;
+
+    
     
     beforeEach(() => {
         bootstrapMockApis();
@@ -354,7 +356,7 @@ describe("Test suite: Acquisition Package ", () => {
         cy.textExists(common.header, "Let’s confirm your contact information"); 
         
         //select radio button
-        cy.contactRoleRadioBtnOption(contact.militaryRadioBtn,"MILITARY");           
+        cy.contactRoleRadioBtnOption(contact.militaryRadioBtn,"MILITARY");
 
         //Click Rank dropdown
         cy.dropDownClick(contact.rankInput);            

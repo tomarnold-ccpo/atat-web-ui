@@ -9,7 +9,24 @@ import rootStore from "../index";
 import { MilitaryRankDTO, SystemChoiceDTO } from "@/api/models";
 import api from "@/api";
 import { TABLENAME as MilitaryRanksTable } from "@/api/militaryRanks";
-import { AutoCompleteItem, AutoCompleteItemGroups, CountryObj } from "types/Global";
+import { AutoCompleteItem, AutoCompleteItemGroups, CountryObj, SelectData } from "types/Global";
+
+const ATAT_CONTACT_DATA_KEY = "ATAT_CONTACT_DATA_KEY";
+interface ContactSessionData {
+  militaryRanks: MilitaryRankDTO[];
+  branchChoices: SystemChoiceDTO[];
+  militaryAutoCompleteGroups: AutoCompleteItemGroups;
+}
+
+const saveSessionData = (data: ContactSessionData): void => {
+  sessionStorage.setItem(
+    ATAT_CONTACT_DATA_KEY,
+    JSON.stringify({
+       militaryRanks: data.militaryRanks,
+       branchChoices: data.branchChoices,
+       militaryAutoCompleteGroups: data.militaryAutoCompleteGroups
+    }))
+}
 
 const sortRanks = (a:MilitaryRankDTO, b:MilitaryRankDTO) => {
   if (a.grade.startsWith("O") && b.grade.startsWith("O")) {
@@ -24,6 +41,17 @@ const sortRanks = (a:MilitaryRankDTO, b:MilitaryRankDTO) => {
     return a.grade > b.grade ? 1 : -1;
   }};
 
+   const mapBranchChoicesToSelectData = (choices: SystemChoiceDTO[])=>{
+
+    return choices.map((choice) => {
+      const text = `U.S. ${choice.label}`;
+      const { value } = choice;
+      return {
+        text,
+        value,
+      };
+    });
+   }
 
 @Module({
   name: "ContactData",
@@ -36,6 +64,7 @@ export class ContactDataStore extends VuexModule {
   public militaryRanks: MilitaryRankDTO[] = [];
   public branchChoices: SystemChoiceDTO[] = [];
   public militaryAutoCompleteGroups: AutoCompleteItemGroups = {};
+  public branchData: SelectData[] = [];
 
   public countries: CountryObj[] = [
     {
@@ -236,11 +265,14 @@ export class ContactDataStore extends VuexModule {
   @Mutation
   public setRanks(value: MilitaryRankDTO[]): void {
     this.militaryRanks = value;
+    saveSessionData(this);
   }
 
   @Mutation
   public setBranches(value: SystemChoiceDTO[]): void {
     this.branchChoices = value;
+    this.branchData = mapBranchChoicesToSelectData(value);
+    saveSessionData(this);
   }
 
   @Mutation
@@ -261,6 +293,16 @@ export class ContactDataStore extends VuexModule {
       autoCompleteItemGroups[branch.value] = branchRanks;
     });
     this.militaryAutoCompleteGroups = autoCompleteItemGroups;
+    debugger;
+    saveSessionData(this);
+  }
+
+  @Mutation
+  private setDataFromSession(sessionData: ContactSessionData) {
+     this.militaryRanks = sessionData.militaryRanks;
+     this.branchChoices = sessionData.branchChoices;
+     this.militaryAutoCompleteGroups = sessionData.militaryAutoCompleteGroups;
+     this.branchData = mapBranchChoicesToSelectData(sessionData.branchChoices);
   }
 
   @Action({ rawError: true })
@@ -273,15 +315,35 @@ export class ContactDataStore extends VuexModule {
   @Action({ rawError: true })
   public async initialize(): Promise<void> {
     try {
-      const branches = await api.systemChoices.getChoices(
-        MilitaryRanksTable,
-        "branch"
-      );
-      this.setBranches(branches);
-      const ranks = await api.militaryRankTable.all();
-      this.setRanks(ranks);
-      this.setMilitaryAutoCompleteGroups();
-      this.setInitialized(true);
+    
+       if(this.initialized){
+          return;
+       }
+
+      const storedSessionData = sessionStorage.getItem(
+        ATAT_CONTACT_DATA_KEY
+      ) as string;
+
+      if(storedSessionData && storedSessionData.length > 0){
+        const parsedData = JSON.parse(storedSessionData) as ContactSessionData;
+        this.setDataFromSession(parsedData);
+        this.setInitialized(true);
+        debugger;
+      }
+      else{
+
+        const branches = await api.systemChoices.getChoices(
+          MilitaryRanksTable,
+          "branch"
+        );
+        this.setBranches(branches);
+        const ranks = await api.militaryRankTable.all();
+        this.setRanks(ranks);
+        this.setMilitaryAutoCompleteGroups();
+        this.setInitialized(true);
+      }
+  
+    
     } catch (error) {
       console.log(error);
       console.log("error loading military rank data");

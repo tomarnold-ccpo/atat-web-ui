@@ -145,7 +145,7 @@ import {
   RadioButton,
   SelectData,
 } from "../../../types/Global";
-import { ContactDTO, SystemChoiceDTO } from "@/api/models";
+import { ContactDTO } from "@/api/models";
 import { hasChanges } from "@/helpers";
 import SaveOnLeave from "@/mixins/saveOnLeave";
 
@@ -169,17 +169,15 @@ export default class ContactInfo extends Mixins(SaveOnLeave) {
   }
 
   // watchers
-  @Watch("ContactData.militaryAutoCompleteGroups")
-  protected branchRankDataChange(newVal: AutoCompleteItemGroups): void {
-    debugger;
-    this.branchRanksData = newVal;
-  }
+  // @Watch("ContactData.militaryAutoCompleteGroups")
+  // protected branchRankDataChange(newVal: AutoCompleteItemGroups): void {
+  //   this.branchRanksData = newVal;
+  // }
 
-  @Watch("ContactData.branchChoices")
-  protected branchDataChange(newVal: SelectData[]): void {
-    debugger;
-    this.branchData = newVal;
-  }
+  // @Watch("ContactData.branchChoices")
+  // protected branchDataChange(newVal: SelectData[]): void {
+  //   this.branchData = newVal;
+  // }
 
   @Watch("selectedBranch")
   protected branchChange(): void {
@@ -191,7 +189,7 @@ export default class ContactInfo extends Mixins(SaveOnLeave) {
   protected roleChange(newRole: string): void {
     if (newRole === "MILITARY") {
       const branch = this.branchData.filter((branchObj) => {
-        return branchObj.value === this.selectedServiceOrAgency.value;
+        branchObj.value === this.selectedServiceOrAgency.value;
       });
       if (branch.length) {
         this.selectedBranch = branch[0];
@@ -333,17 +331,7 @@ export default class ContactInfo extends Mixins(SaveOnLeave) {
   public async loadOnEnter(): Promise<void> {
     this.savedData.can_access_package = "true";
     // const branches = AcquisitionPackage.getBranchOptions();
-    this.branchData = AcquisitionPackage.branchSelectData;
-    debugger;
-    // this.branchData = branches.map((choice) => {
-    //   const text = `U.S. ${choice.label}`;
-    //   const { value } = choice;
-    //   return {
-    //     text,
-    //     value,
-    //   };
-    // });
-
+    this.branchData = ContactData.branchData;
     this.branchRanksData = ContactData.militaryAutoCompleteGroups;
 
     const storeData = await AcquisitionPackage.loadContactInfo('Mission Owner');
@@ -402,6 +390,7 @@ export default class ContactInfo extends Mixins(SaveOnLeave) {
       }
       
     }
+        console.log({branchRanksData: Object.keys(this.branchRanksData) });
   }
 
   private hasChanged(): boolean {
@@ -422,7 +411,9 @@ export default class ContactInfo extends Mixins(SaveOnLeave) {
     return true;
   }
 
-  public async mounted(): Promise<void> {
+ async mounted(): Promise<void> {
+   debugger;
+    await ContactData.initialize();
     await this.loadOnEnter();
   }
 }

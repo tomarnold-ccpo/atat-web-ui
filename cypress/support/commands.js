@@ -118,7 +118,8 @@ Cypress.Commands.add("clickSideStepper", (stepper_Selector,stepperText) => {
 });
 
 Cypress.Commands.add("dropDownClick", (selector) => {
-    cy.findElement(selector).click();  
+    
+    cy.findElement(selector).should('be.visible').realClick(); 
 });
 
 Cypress.Commands.add("autoCompleteSelection", (selector, inputText, selector1) => {
@@ -265,13 +266,15 @@ Cypress.Commands.add("enterOrganizationAddress", (orgAddress)    => {
 });
 
 Cypress.Commands.add("contactRoleRadioBtnOption", (selector,value) => {
-    cy.radioBtn(selector, value).click({ force: true });
+    cy.radioBtn(selector, value).realClick();
+    cy.get('#Radio_Military', {timeout: 10000}).should('be.checked')
     cy.findElement(contact.contactRadioBtnActive)
         .then(($radioBtn) => {
             cy.log($radioBtn.text());
+            debugger;
             const selectedOption = $radioBtn.text();
             if (selectedOption === "radio_button_checkedMilitary") {
-                cy.findElement(contact.serviceBranchControl)
+                cy.findElement(contact.serviceBranchControl, {setTimeout: 10000})
                     .should("exist")
                     .and("be.visible")
                     .and("contain", "Service branch");
