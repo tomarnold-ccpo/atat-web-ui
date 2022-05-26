@@ -104,6 +104,7 @@ export const routeNames = {
   ExistingContractBackground: "Existing_Contract_Background",
   Summary: "Summary",
   FairOpportunity: "Fair_Opportunity",
+  GatherRequirements: "Gather_Requirements",
   Exceptions: "Exceptions",
   JustificationAndApproval: "Justification_and_Approval",
   Background: "Background",
@@ -358,7 +359,14 @@ export const stepperRoutes: Array<StepperRouteConfig> = [
     path: "/performance-requirements",
     component: PerformanceRequirementsIndex,
     children: [
-      {
+      // {
+      //   menuText: "Gather Requirements",
+      //   path: "gather-requirements",
+      //   name: routeNames.GatherRequirements,
+      //   completePercentageWeight: 1,
+        
+      // },
+      {        
         menuText: "Performance Requirements",
         path: "performance-requirements",
         excludeFromMenu: true,
