@@ -15,7 +15,8 @@ import {
   retrieveSession,
 } from "../helpers";
 import Vue from "vue";
-import { stringObj } from "../../../types/Global";
+import { DOWServiceOfferingGroup, stringObj } from "../../../types/Global";
+import { routeNames } from "@/router/stepper";
 
 
 const ATAT_DESCRIPTION_OF_WORK_KEY = "ATAT_DESCRIPTION_OF_WORK_KEY";
@@ -31,8 +32,13 @@ export class DescriptionOfWorkStore extends VuexModule {
   initialized = false;
   serviceOfferings: ServiceOfferingDTO[] = [];
   serviceOfferingGroups: SystemChoiceDTO[] = [];
-
   selectedOfferingGroups: stringObj[] = [];
+  dowServiceOfferingGroups: DOWServiceOfferingGroup[] = [];
+  currentServiceOfferingGroup = "";
+  currentServiceOffering=""; 
+  //Todo: add the other needed props
+  //serviceOfferingsToDelete
+
 
   // store session properties
   protected sessionProperties: string[] = [
@@ -62,14 +68,25 @@ export class DescriptionOfWorkStore extends VuexModule {
   }
 
   @Mutation
-  public setSelectedOfferingGroups(selectedOfferingGroups: string[]) {
+  public setSelectedOfferingGroups(selectedOfferingGroups: string[]): void {
     this.selectedOfferingGroups = []; 
     selectedOfferingGroups.forEach((selectedOfferingGroup) => {
+
+      //do we need this still
       if (!this.selectedOfferingGroups.some(e => e.category === selectedOfferingGroup)) {
         const offering = {
           category: selectedOfferingGroup
         }
         this.selectedOfferingGroups.push(offering);
+      }
+
+      // todo add logic to filter out the removed/deleted service offering group selections
+      if(!this.dowServiceOfferingGroups
+        .some(g=> g.serviceOfferingGroupId === selectedOfferingGroup)){
+        this.dowServiceOfferingGroups.push({
+          serviceOfferingGroupId: selectedOfferingGroup,
+          serviceOfferings: [],
+        })
       }
     });
   }
@@ -86,12 +103,23 @@ export class DescriptionOfWorkStore extends VuexModule {
     }
   }
 
-  @Action({ rawError: true })
-  async ensureInitialized(): Promise<void> {
-    if (!this.initialized) {
-      await this.initialize();
-    }
+@Mutation
+  public setCurrentServiceOfferingGroup(value: string): void {
+    this.currentServiceOfferingGroup = value;
   }
+
+  
+@Mutation
+public setCurrentServiceOffering(value: string): void {
+  this.currentServiceOffering = value;
+}
+
+  @Action({ rawError: true })
+async ensureInitialized(): Promise<void> {
+  if (!this.initialized) {
+    await this.initialize();
+  }
+}
 
   @Action({ rawError: true })
   public async getClassificationLevels(): Promise<ClassificationLevelDTO[]> {
@@ -165,6 +193,65 @@ export class DescriptionOfWorkStore extends VuexModule {
       this.setServiceOfferingGroups(serviceOfferingGroups);  
     } catch (error) {
       throw new Error(`error loading Service Offering Groups ${error}`);
+    }
+  }
+
+  @Action({rawError: true})
+  public async saveServiceOfferingGroupSelections(serviceOfferingGroups: 
+    SystemChoiceDTO[]):Promise<void> {
+    serviceOfferingGroups.forEach(group => {
+      const existingIndx = this.dowServiceOfferingGroups
+        .findIndex(dowGroup=>dowGroup.serviceOfferingGroupId === group.label);
+      if(existingIndx < 0){
+                
+        this.dowServiceOfferingGroups.push({
+          serviceOfferingGroupId: group.label,
+          serviceOfferings: [],
+        })
+      }
+    });
+
+    //todo: add in logic to filter out removed service offering selections
+        
+  }
+
+  @Action({rawError: true})
+  public async resolveNextServiceOfferingGroup():Promise<string> {
+
+    if(this.currentServiceOffering.length > 0){
+
+      const serviceOfferingGroup = this.dowServiceOfferingGroups
+        .find(group=>group.serviceOfferingGroupId === this.currentServiceOfferingGroup);
+        
+      if(this.currentServiceOffering.length > 0){
+
+        const currentServiceOfferingIndex = serviceOfferingGroup ? serviceOfferingGroup.serviceOfferings
+          .findIndex(offering=> offering.otherOfferingName === this.currentServiceOffering): -1 ;  
+        //todo: account for "other";
+        if(currentServiceOfferingIndex > -1)
+        {
+           if(serviceOfferingGroup && serviceOfferingGroup?.serviceOfferings.length 
+            > (currentServiceOfferingIndex + 1))
+           {
+               this.setCurrentServiceOffering
+               (serviceOfferingGroup.serviceOfferings[currentServiceOfferingIndex + 1].serviceOffering);
+
+               return routeNames.SelectServiceOfferings
+           }
+        }
+              
+                 
+        }
+      }
+    }
+    else{
+      const firstServiceOfferingGroup = this.dowServiceOfferingGroups.length > 0 
+        ? this.dowServiceOfferingGroups[0] : "";
+
+      if(firstServiceOfferingGroup)
+      {
+        this.setCurrentServiceOfferingGroup(firstServiceOfferingGroup.serviceOfferingGroupId)
+      }
     }
   }
 }

@@ -92,6 +92,14 @@ export const ContractTrainingReq = (current: string): string => {
     : routeNames.Training;
 };
 
+export const ServiceOfferingGroupRouteResolver = (current: string, direction?: string): string => {
+  
+  console.log({current, direction});
+
+  return "something";
+    
+}
+
 // add resolver here so that it can be found by invoker
 const resolvers: Record<string, StepRouteResolver> = {
   AcorsRouteResolver,
@@ -105,5 +113,6 @@ const resolvers: Record<string, StepRouteResolver> = {
 
 export const InvokeResolver = (
   resolverName: string,
-  currentStep: string
-): string => resolvers[resolverName](currentStep);
+  currentStep: string,
+  direction?: string,
+): string => resolvers[resolverName](currentStep, direction);

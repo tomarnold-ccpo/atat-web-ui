@@ -1,4 +1,4 @@
-export type StepRouteResolver = (current: string) => string;
+export type StepRouteResolver = (current: string, direction?:string) => string;
 export interface StepInfo {
     stepNumber: string;
     stepName: string;

@@ -13,14 +13,14 @@ import { InvokeResolver } from "./index";
 Component.registerHooks(["beforeRouteEnter"]);
 @Component({})
 export default class Resolver extends Vue {
-  private resolveRoute(current: string): void {
+  private resolveRoute(current: string, direction?: string): void {
     const routeResolver = this.$route.params.resolver;
 
     if (!routeResolver) {
       throw new Error("could not obtain step resolver");
     }
 
-    const routeName = InvokeResolver(routeResolver, current);
+    const routeName = InvokeResolver(routeResolver, current, direction);
     this.$router.push({ name: routeName });
   }
 

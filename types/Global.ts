@@ -60,7 +60,7 @@ interface StepperRouteBase {
     /**
      * A handler to 
      */
-    routeResolver?: (currentRoute: string) => string;
+    routeResolver?: (currentRoute: string, direction?: string) => string;
     additionalButtons?: AdditionalButton[];
     backButtonText?: string;
 }
@@ -184,4 +184,35 @@ export interface invalidFile{
   doesFileExist: boolean;
   SNOWError?: string;
   statusCode?: number;
+}
+
+export interface DOWInstanceClassificationLevel {
+  longLabel: string;
+  shortLabel: string;
+}
+
+export interface DOWPoP {
+  label: string;
+  sysId: string
+}
+
+export interface DOWClassificationInstance {
+  sysId: string;
+  classificationLevelLabels?: DOWInstanceClassificationLevel;
+  classificationLevelSysId: string;
+  anticipatedNeedUsage: string;
+  entireDuration: string;
+  selectedPeriods: DOWPoP[];
+}
+
+export interface DOWServiceOfferings {
+  serviceOffering: string;
+  otherOfferingName?: string;
+  sysId: string;
+  classificationInstances: DOWClassificationInstance[];
+}
+
+export interface DOWServiceOfferingGroup {
+  serviceOfferingGroupId: string;
+  serviceOfferings: DOWServiceOfferings[];
 }

@@ -94,6 +94,7 @@ import {
   FOIARecordResolver,
   A11yRequirementResolver,
   ContractTrainingReq,
+  ServiceOfferingGroupRouteResolver,
 } from "./resolvers";
 
 export const routeNames = {
@@ -115,6 +116,7 @@ export const routeNames = {
   RequirementCategories: "Requirement_Categories",
   ServiceOfferings: "Service_Offerings",
   ServiceOfferingDetails: "Service_Offering_Details",
+  SelectServiceOfferings: "Selected_Service_Offerings",
   DOWSummary: "DOW_Summary",
   OptimizeCurrentEnvironment: "Optimize_Current_Environment",
   AnythingASAServiceXaas:"Anything_as_a_Service_Xaas",
@@ -363,11 +365,37 @@ export const stepperRoutes: Array<StepperRouteConfig> = [
     children: [
       {
         menuText: "Performance Requirements",
-        path: "performance-requirements",
+        path: "/",
         excludeFromMenu: true,
         name: routeNames.RequirementCategories,
         completePercentageWeight: 1,
         component: RequirementCategories,
+        routeResolver: ServiceOfferingGroupRouteResolver,
+      },
+      {
+        path:"/:serviceOfferingGroup",
+        menuText: "Service Offerings",
+        excludeFromMenu: true,
+        name: routeNames.SelectServiceOfferings,
+        completePercentageWeight: 1,
+        component: ServiceOfferings,
+        additionalButtons: [
+          {
+            buttonText: "I don’t need these cloud resources",
+            buttonId: "DontNeedResources",
+            buttonClass: "secondary",
+            name: routeNames.ServiceOfferings, // functionality TBD in future ticket
+          },
+        ],
+        routeResolver: ServiceOfferingGroupRouteResolver,
+      },
+      {
+        path:"performance-requi/:serviceOfferingGroup/:serviceOffering",
+        menuText: "Service Offering Details",
+        excludeFromMenu: true,
+        name: routeNames.ServiceOfferingDetails,
+        completePercentageWeight: 1,
+        component: ServiceOfferingDetails,
       },
       {
         menuText: "Service Offerings",
