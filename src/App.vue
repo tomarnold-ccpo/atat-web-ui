@@ -11,7 +11,7 @@
     <v-main id="app" >
       <div id="app-content" class="d-flex flex-column">
         <div  class="mb-auto">
-          <router-view></router-view>
+          <router-view key="$route.fullPath"></router-view>
         </div>
         <ATATStepperNavigation
           @next="navigate('next')"
@@ -93,8 +93,6 @@ export default class App extends Vue {
       Steps.setCurrentStep(stepName);
       this.setNavButtons(step);
     }
-    
-    await AcquisitionPackage.initialize();
     
 
     this.slideoutPanelComponent = SlideoutPanel.slideoutPanelComponent;
