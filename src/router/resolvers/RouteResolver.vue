@@ -12,9 +12,10 @@ import { InvokeResolver } from "./index";
 
 Component.registerHooks(["beforeRouteEnter"]);
 @Component({})
-export default class Resolver extends Vue {
-  private resolveRoute(current: string, direction?: string): void {
+export default class RouteResolver extends Vue {
+  private resolveRoute(current: string): void {
     const routeResolver = this.$route.params.resolver;
+    const direction =  this.$route.params.resolver;
 
     if (!routeResolver) {
       throw new Error("could not obtain step resolver");
@@ -31,10 +32,10 @@ export default class Resolver extends Vue {
   ): Promise<void> {
     next(async (vm: { resolveRoute: (current: string) => void }) => {
       const current = from.name;
+
       if (!current) {
         throw new Error("from route name undefined");
       }
-
       vm.resolveRoute(current);
     });
   }

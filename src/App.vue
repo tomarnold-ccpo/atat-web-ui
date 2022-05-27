@@ -51,6 +51,7 @@ import {
   AdditionalButton,
   StepInfo,
   StepRouteResolver,
+  StepPathResolver,
 } from "@/store/steps/types";
 import { buildStepperData } from "./router/stepper";
 import actionHandler from "./action-handlers/index";
@@ -120,20 +121,44 @@ export default class App extends Vue {
     const nextStepName =
       direction === "next" ? await Steps.getNext() : await Steps.getPrevious();
 
+    debugger;
+
     if (nextStepName) {
-      const isRouteResolver =
-        (nextStepName as StepRouteResolver).name !== undefined;
+
+      const resolverName = (nextStepName as (current:string, direction?:string )=>string)?.name;
+      const isRouteResolver = resolverName !== undefined && resolverName.includes("RouteResolver");
+      const isPathResolver = resolverName !== undefined && resolverName.includes("PathResolver");
+
+      
       if (isRouteResolver) {
         const routeResolver = nextStepName as StepRouteResolver;
         this.$router.push({
-          name: "resolver",
+          name: "routeResolver",
           params: {
             resolver: routeResolver.name,
+            direction
           },
         });
-      } else {
-        this.$router.push({ name: nextStepName as string });
+
+        return;
+
       }
+
+      if (isPathResolver) {
+        const pathResolver = nextStepName as StepPathResolver;
+        this.$router.push({
+          name: "pathResolver",
+          params: {
+            resolver: pathResolver.name,
+            direction,
+          },
+        });
+
+        return;
+
+      }
+
+      this.$router.push({ name: nextStepName as string });
     }
   }
 

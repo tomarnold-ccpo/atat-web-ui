@@ -58,9 +58,13 @@ interface StepperRouteBase {
      */
     excludeFromMenu?: boolean;
     /**
-     * A handler to 
+     * A handler to resolve to a route name
      */
     routeResolver?: (currentRoute: string, direction?: string) => string;
+    /**
+     * A handler to resolve to a path name
+     */
+    pathResolver?: (currentRoute: string, direction?: string) => string;
     additionalButtons?: AdditionalButton[];
     backButtonText?: string;
 }

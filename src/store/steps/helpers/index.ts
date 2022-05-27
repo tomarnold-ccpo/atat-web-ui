@@ -13,7 +13,8 @@ export const mapStepConfigs = (
       stepLabel: routeConfig.menuText || "",
       prev: undefined,
       next: undefined,
-      resolver: routeConfig.routeResolver,
+      routeResolver: routeConfig.routeResolver,
+      pathResolver: routeConfig.pathResolver,
       additionalButtons: routeConfig.additionalButtons || [],
       backButtonText: routeConfig.backButtonText || "Back",
     };
@@ -48,8 +49,8 @@ export const mapStepConfigs = (
 };
 
 export const resolveNextRouteName = (current: string, stepInfo: StepInfo): string | undefined => {
-  if (stepInfo.resolver) {
-    return (stepInfo.resolver(current));
+  if (stepInfo.routeResolver) {
+    return (stepInfo.routeResolver(current));
   }
 
   return stepInfo.stepName;

@@ -16,10 +16,11 @@ import {
 } from "../helpers";
 import Vue from "vue";
 import { DOWServiceOfferingGroup, stringObj } from "../../../types/Global";
-import { routeNames } from "@/router/stepper";
 
 
 const ATAT_DESCRIPTION_OF_WORK_KEY = "ATAT_DESCRIPTION_OF_WORK_KEY";
+
+
 
 @Module({
   name: "DescriptionOfWork",
@@ -34,8 +35,9 @@ export class DescriptionOfWorkStore extends VuexModule {
   serviceOfferingGroups: SystemChoiceDTO[] = [];
   selectedOfferingGroups: stringObj[] = [];
   dowServiceOfferingGroups: DOWServiceOfferingGroup[] = [];
-  currentServiceOfferingGroup = "";
-  currentServiceOffering=""; 
+  currentServiceOfferingGroupIndex = -1;
+  currentServiceOfferingIndex = -1;
+
   //Todo: add the other needed props
   //serviceOfferingsToDelete
 
@@ -69,6 +71,8 @@ export class DescriptionOfWorkStore extends VuexModule {
 
   @Mutation
   public setSelectedOfferingGroups(selectedOfferingGroups: string[]): void {
+    debugger;
+
     this.selectedOfferingGroups = []; 
     selectedOfferingGroups.forEach((selectedOfferingGroup) => {
 
@@ -104,14 +108,14 @@ export class DescriptionOfWorkStore extends VuexModule {
   }
 
 @Mutation
-  public setCurrentServiceOfferingGroup(value: string): void {
-    this.currentServiceOfferingGroup = value;
+  public setCurrentServiceOfferingGroup(value: number): void {
+    this.currentServiceOfferingGroupIndex = value;
   }
 
   
 @Mutation
-public setCurrentServiceOffering(value: string): void {
-  this.currentServiceOffering = value;
+public setCurrentServiceOffering(value: number): void {
+  this.currentServiceOfferingIndex = value;
 }
 
   @Action({ rawError: true })
@@ -151,7 +155,7 @@ async ensureInitialized(): Promise<void> {
         await Promise.all([
           this.loadClassificationLevels(),
           this.loadServiceOfferings(),
-          this.LoadServiceOfferingGroups(),
+          this.loadServiceOfferingGroups(),
         ]);
         this.setInitialized(true);
         storeDataToSession(
@@ -186,7 +190,7 @@ async ensureInitialized(): Promise<void> {
   }
 
   @Action({rawError: true})
-  public async LoadServiceOfferingGroups(): Promise<void> {
+  public async loadServiceOfferingGroups(): Promise<void> {
     try {
       const serviceOfferingGroups = await api.systemChoices
         .getChoices(ServiceOfferingTableName, "service_offering_group");
@@ -216,44 +220,13 @@ async ensureInitialized(): Promise<void> {
   }
 
   @Action({rawError: true})
-  public async resolveNextServiceOfferingGroup():Promise<string> {
-
-    if(this.currentServiceOffering.length > 0){
-
-      const serviceOfferingGroup = this.dowServiceOfferingGroups
-        .find(group=>group.serviceOfferingGroupId === this.currentServiceOfferingGroup);
-        
-      if(this.currentServiceOffering.length > 0){
-
-        const currentServiceOfferingIndex = serviceOfferingGroup ? serviceOfferingGroup.serviceOfferings
-          .findIndex(offering=> offering.otherOfferingName === this.currentServiceOffering): -1 ;  
-        //todo: account for "other";
-        if(currentServiceOfferingIndex > -1)
-        {
-           if(serviceOfferingGroup && serviceOfferingGroup?.serviceOfferings.length 
-            > (currentServiceOfferingIndex + 1))
-           {
-               this.setCurrentServiceOffering
-               (serviceOfferingGroup.serviceOfferings[currentServiceOfferingIndex + 1].serviceOffering);
-
-               return routeNames.SelectServiceOfferings
-           }
-        }
-              
-                 
-        }
-      }
-    }
-    else{
-      const firstServiceOfferingGroup = this.dowServiceOfferingGroups.length > 0 
-        ? this.dowServiceOfferingGroups[0] : "";
-
-      if(firstServiceOfferingGroup)
-      {
-        this.setCurrentServiceOfferingGroup(firstServiceOfferingGroup.serviceOfferingGroupId)
-      }
-    }
+  public async setCurrentServiceOfferingDataSet({groupIndex, offeringIndex}:
+    {groupIndex: number, offeringIndex: number}):Promise<void>{
+    this.setCurrentServiceOfferingGroup(groupIndex);
+    this.setCurrentServiceOffering(offeringIndex);
   }
+
+  
 }
 
 const DescriptionOfWork = getModule(DescriptionOfWorkStore);

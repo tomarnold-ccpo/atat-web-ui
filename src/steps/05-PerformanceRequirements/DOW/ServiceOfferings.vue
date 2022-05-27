@@ -115,6 +115,13 @@ export default class ServiceOfferings extends Vue {
       value: this.otherValue, 
     }    
   ];
+
+
+  private async onLoad():Promise<void>{
+
+    const serviceOfferingGroup = this.$route.params.groupName;
+    console.log({serviceOfferingGroup});
+  }
   
 }
 

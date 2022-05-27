@@ -90,11 +90,11 @@ import {
   AcorsRouteResolver,
   CurrentContractDetailsRouteResolver,
   CurrentContractEnvRouteResolver,
-  PIIRecordResolver,
-  FOIARecordResolver,
-  A11yRequirementResolver,
-  ContractTrainingReq,
-  ServiceOfferingGroupRouteResolver,
+  PIIRecordRouteResolver,
+  FOIARecordRouteResolver,
+  A11yRequirementRouteResolver,
+  ContractTrainingReqRouteResolver,
+  ServiceOfferingGroupPathResolver,
 } from "./resolvers";
 
 export const routeNames = {
@@ -370,10 +370,9 @@ export const stepperRoutes: Array<StepperRouteConfig> = [
         name: routeNames.RequirementCategories,
         completePercentageWeight: 1,
         component: RequirementCategories,
-        routeResolver: ServiceOfferingGroupRouteResolver,
       },
       {
-        path:"/:serviceOfferingGroup",
+        path:"service-offering-group/:groupName",
         menuText: "Service Offerings",
         excludeFromMenu: true,
         name: routeNames.SelectServiceOfferings,
@@ -387,40 +386,50 @@ export const stepperRoutes: Array<StepperRouteConfig> = [
             name: routeNames.ServiceOfferings, // functionality TBD in future ticket
           },
         ],
-        routeResolver: ServiceOfferingGroupRouteResolver,
-      },
-      {
-        path:"performance-requi/:serviceOfferingGroup/:serviceOffering",
-        menuText: "Service Offering Details",
-        excludeFromMenu: true,
-        name: routeNames.ServiceOfferingDetails,
-        completePercentageWeight: 1,
-        component: ServiceOfferingDetails,
-      },
-      {
-        menuText: "Service Offerings",
-        path: "service-offerings",
-        excludeFromMenu: true,
-        name: routeNames.ServiceOfferings,
-        completePercentageWeight: 1,
-        component: ServiceOfferings,
-        additionalButtons: [
+        pathResolver: ServiceOfferingGroupPathResolver,
+        children:[
           {
-            buttonText: "I don’t need these cloud resources",
-            buttonId: "DontNeedResources",
-            buttonClass: "secondary",
-            name: routeNames.ServiceOfferings, // functionality TBD in future ticket
+            menuText: "Performance Requirements",
+            path: "service-offering/:offeringName",
+            excludeFromMenu: true,
+            completePercentageWeight: 1,
+            component: ServiceOfferingDetails,
+            pathResolver: ServiceOfferingGroupPathResolver
           },
-        ],
+        ]
       },
       {
+        path:"serviceOffering/:serviceOffering",
         menuText: "Service Offering Details",
-        path: "service-offering-details",
         excludeFromMenu: true,
         name: routeNames.ServiceOfferingDetails,
         completePercentageWeight: 1,
         component: ServiceOfferingDetails,
       },
+      // {
+      //   menuText: "Service Offerings",
+      //   path: "service-offerings",
+      //   excludeFromMenu: true,
+      //   name: routeNames.ServiceOfferings,
+      //   completePercentageWeight: 1,
+      //   component: ServiceOfferings,
+      //   additionalButtons: [
+      //     {
+      //       buttonText: "I don’t need these cloud resources",
+      //       buttonId: "DontNeedResources",
+      //       buttonClass: "secondary",
+      //       name: routeNames.ServiceOfferings, // functionality TBD in future ticket
+      //     },
+      //   ],
+      // },
+      // {
+      //   menuText: "Service Offering Details",
+      //   path: "service-offering-details",
+      //   excludeFromMenu: true,
+      //   name: routeNames.ServiceOfferingDetails,
+      //   completePercentageWeight: 1,
+      //   component: ServiceOfferingDetails,
+      // },
       {
         menuText: "DOW Summary",
         path: "dow-summary",
@@ -489,7 +498,7 @@ export const stepperRoutes: Array<StepperRouteConfig> = [
         path: "training",
         completePercentageWeight: 2,
         component: TrainingCourses,
-        routeResolver: ContractTrainingReq
+        routeResolver: ContractTrainingReqRouteResolver
 
       },
     ]
@@ -516,7 +525,7 @@ export const stepperRoutes: Array<StepperRouteConfig> = [
         completePercentageWeight: 2,
         component: PIIRecord,
         excludeFromMenu: true,
-        routeResolver: PIIRecordResolver
+        routeResolver: PIIRecordRouteResolver
       },
       {
         menuText: "Business Associate Agreement (BAA)",
@@ -539,7 +548,7 @@ export const stepperRoutes: Array<StepperRouteConfig> = [
         completePercentageWeight: 2,
         excludeFromMenu: true,
         component: FOIACoordinator,
-        routeResolver: FOIARecordResolver
+        routeResolver: FOIARecordRouteResolver
       },
       {
         menuText: "Section 508 Standards",
@@ -555,7 +564,7 @@ export const stepperRoutes: Array<StepperRouteConfig> = [
         excludeFromMenu: true,
         completePercentageWeight: 2,
         component: Section508AccessibilityRequirements,
-        routeResolver: A11yRequirementResolver
+        routeResolver: A11yRequirementRouteResolver
       },
     ]
   },

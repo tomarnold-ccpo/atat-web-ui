@@ -3,6 +3,8 @@ import OtherContractConsiderations from "@/store/otherContractConsiderations";
 
 import { routeNames } from "../stepper";
 import { StepRouteResolver } from "@/store/steps/types";
+import DescriptionOfWork from "@/store/descriptionOfWork";
+import { DOWServiceOfferingGroup } from "types/Global";
 
 export const AcorsRouteResolver = (current: string): string => {
   const hasAlternativeContactRep = AcquisitionPackage.hasAlternativeContactRep;
@@ -24,7 +26,7 @@ export const AcorsRouteResolver = (current: string): string => {
   return routeNames.AcorInformation;
 };
 
-
+//route resolver, the naming convention is strict  must have suffix "RouteResolver"
 export const CurrentContractDetailsRouteResolver = (current: string): string => {
   const hasCurrentContract 
     = AcquisitionPackage.currentContract?.current_contract_exists === "YES";
@@ -47,7 +49,7 @@ export const CurrentContractEnvRouteResolver = (current: string): string => {
     : routeNames.PeriodOfPerformance;
 };
 
-export const PIIRecordResolver = (current: string): string => {
+export const PIIRecordRouteResolver = (current: string): string => {
   const hasSystemOfRecord = AcquisitionPackage.sensitiveInformation?.pii_present === "YES";
   // if system of record will be included, route to system of records page
   if (hasSystemOfRecord) {
@@ -56,7 +58,7 @@ export const PIIRecordResolver = (current: string): string => {
   return current === routeNames.PII ? routeNames.BAA : routeNames.PII;
 };
 
-export const FOIARecordResolver = (current: string): string => {
+export const FOIARecordRouteResolver = (current: string): string => {
   const needsFOIACoordinator 
     = AcquisitionPackage.sensitiveInformation?.potential_to_be_harmful === "YES";
   // if user selects "Yes" on FOIA (Public Disclosure of Information) page,
@@ -68,7 +70,7 @@ export const FOIARecordResolver = (current: string): string => {
     ? routeNames.Section508Standards
     : routeNames.FOIA;
 };
-export const A11yRequirementResolver = (current: string): string => {
+export const A11yRequirementRouteResolver = (current: string): string => {
   const needsA11yReqs
       = AcquisitionPackage.sensitiveInformation?.section_508_sufficient === "NO";
   // if user selects "No" on Section 508 standards page,
@@ -81,7 +83,7 @@ export const A11yRequirementResolver = (current: string): string => {
     : routeNames.Section508Standards;
 };
 
-export const ContractTrainingReq = (current: string): string => {
+export const ContractTrainingReqRouteResolver = (current: string): string => {
   const contractTraining
       = AcquisitionPackage.contractConsiderations?.contractor_required_training === "YES";
   if (contractTraining) {
@@ -92,12 +94,82 @@ export const ContractTrainingReq = (current: string): string => {
     : routeNames.Training;
 };
 
-export const ServiceOfferingGroupRouteResolver = (current: string, direction?: string): string => {
-  
-  console.log({current, direction});
+const buildPerformanceRequirementsRoute= (serviceOfferingGroupIndex: number, 
+  serviceOfferingIndex: number, dow: DOWServiceOfferingGroup[])=>{
 
-  return "something";
+  const serviceOfferingGroup = serviceOfferingGroupIndex > -1 ? 
+    dow[serviceOfferingGroupIndex] : dow[0];
     
+  if(serviceOfferingIndex === -1)
+  {
+    return `/performance-requirements/${serviceOfferingGroup.serviceOfferingGroupId}`
+  }
+  else{
+    const serviceOffering = serviceOfferingGroup.serviceOfferings[serviceOfferingIndex];
+    const serviceOfferingName = serviceOffering.serviceOffering.length ? 
+      serviceOffering.serviceOffering : serviceOffering.otherOfferingName;
+    let path = `/performance-requirements/${serviceOfferingGroup.serviceOfferingGroupId}`;
+    path +=`/${serviceOfferingName}`;
+    return path;
+  }
+    
+}
+
+//Path Resolvers, the nomemclature is strict the resolver must have a suffice "PathResolver"
+export const ServiceOfferingGroupPathResolver = (current: string, direction?: string): string => {
+  debugger;
+  
+  if(current === routeNames.RequirementCategories){
+    const serviceOfferingGroup = DescriptionOfWork.dowServiceOfferingGroups[0];
+    const serviceOfferingGroupName =
+     serviceOfferingGroup.serviceOfferingGroupId.toLocaleLowerCase();
+    return `/performance-requirements/service-offering-group/${serviceOfferingGroupName}`;
+  }
+
+  const currentGroupIndex = DescriptionOfWork.currentServiceOfferingGroupIndex;
+  const currentServiceOfferingIndex = DescriptionOfWork.currentServiceOfferingIndex;
+  const currentServiceGroup = DescriptionOfWork.dowServiceOfferingGroups[currentGroupIndex];
+
+
+  if(direction === "next"){
+      
+    if(currentGroupIndex === -1){
+      DescriptionOfWork.setCurrentServiceOfferingGroup(0);
+    }
+    if(currentServiceGroup.serviceOfferings.length >= currentServiceOfferingIndex + 1){
+      DescriptionOfWork.setCurrentServiceOffering(currentServiceOfferingIndex + 1);
+       
+      return buildPerformanceRequirementsRoute(DescriptionOfWork.currentServiceOfferingGroupIndex, 
+        DescriptionOfWork.currentServiceOfferingIndex, DescriptionOfWork.dowServiceOfferingGroups);
+    }
+    else{
+
+      if(DescriptionOfWork.dowServiceOfferingGroups.length >= currentGroupIndex + 1)
+      {
+        DescriptionOfWork.setCurrentServiceOfferingGroup(currentGroupIndex + 1);
+        return buildPerformanceRequirementsRoute(DescriptionOfWork
+          .currentServiceOfferingGroupIndex, 
+        DescriptionOfWork.currentServiceOfferingIndex, 
+        DescriptionOfWork.dowServiceOfferingGroups);
+      }
+      else{
+
+        return "summary page";
+      }
+    }
+  }
+  else{
+
+    if(currentGroupIndex > -1){
+      DescriptionOfWork.setCurrentServiceOfferingGroup(currentGroupIndex -1);
+      DescriptionOfWork.setCurrentServiceOffering(0);
+      return buildPerformanceRequirementsRoute(DescriptionOfWork.currentServiceOfferingGroupIndex, 
+        DescriptionOfWork.currentServiceOfferingIndex, DescriptionOfWork.dowServiceOfferingGroups);
+    }
+      
+  }
+
+  throw new Error("something went wrong");    
 }
 
 // add resolver here so that it can be found by invoker
@@ -105,10 +177,12 @@ const resolvers: Record<string, StepRouteResolver> = {
   AcorsRouteResolver,
   CurrentContractDetailsRouteResolver,
   CurrentContractEnvRouteResolver,
-  PIIRecordResolver,
-  FOIARecordResolver,
-  A11yRequirementResolver,
-  ContractTrainingReq,
+  PIIRecordRouteResolver,
+  FOIARecordRouteResolver,
+  A11yRequirementRouteResolver,
+  ContractTrainingReq: ContractTrainingReqRouteResolver,
+  ServiceOfferingGroupPathResolver,
+
 };
 
 export const InvokeResolver = (
