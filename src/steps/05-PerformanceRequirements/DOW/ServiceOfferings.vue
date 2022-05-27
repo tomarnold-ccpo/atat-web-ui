@@ -122,6 +122,11 @@ export default class ServiceOfferings extends Vue {
     const serviceOfferingGroup = this.$route.params.groupName;
     console.log({serviceOfferingGroup});
   }
+
+  public async mounted(): Promise<void> {
+      
+    await this.onLoad();
+  }
   
 }
 
