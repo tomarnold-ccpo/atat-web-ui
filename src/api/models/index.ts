@@ -227,3 +227,16 @@ export interface ReferenceColumn {
   link: string;
   value: string;
 }
+
+export interface SelectedServiceOfferingDTO extends BaseTableDTO {
+  classification_instances: string;
+  other_service_offering: string;
+  service_offering: string;
+}
+
+export interface ClassificationInstanceDTO extends BaseTableDTO {
+  selected_periods: string;
+  classification_level: string;
+  usage_description: string;
+  need_for_entire_task_order_duration: string;
+}

@@ -21,6 +21,7 @@ import { PeriodApi } from "./period";
 import { ClassificationLevelApi } from "./classificationLevels";
 import { ServiceOfferingApi } from "./serviceOffering";
 import { RequiredServicesApi } from "./requiredServices";
+import { SelectedServiceOfferingApi } from "./selectedServiceOffering";
 
 export const api = {
 
@@ -30,6 +31,7 @@ export const api = {
   projectOverviewTable: new ProjectOverviewApi(),
   organizationTable: new OrganizationApi(),
   classificationLevelTable: new ClassificationLevelApi(),
+  classificationInstanceTable: new ClassificationLevelApi(),
   contactsTable: new ContactsApi(),
   contractConsiderationsTable: new ContractConsiderationsApi(),
   fairOpportunityTable: new FairOpportunityApi(),
@@ -46,6 +48,8 @@ export const api = {
   statesTable: new StatesApi(),
   countriesTable: new CountriesApi(),
   requiredServicesTables: new RequiredServicesApi(),
+  selectedServiceOfferingTable: new SelectedServiceOfferingApi(),
+  
 }
 
 export default {
