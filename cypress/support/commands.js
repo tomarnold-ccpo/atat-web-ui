@@ -25,6 +25,7 @@
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 import 'cypress-iframe';
 import '@4tw/cypress-drag-drop';
+import 'cypress-file-upload';
 import common from '../selectors/common.sel';
 import projectOverview from '../selectors/projectOverview.sel.js';
 import contact from '../selectors/contact.sel';
@@ -145,6 +146,11 @@ Cypress.Commands.add('btnExists', (selector, text) => {
     .and("have.text", text);  
 });
 
+Cypress.Commands.add('btnClick', (selector, text) => {
+  cy.findElement(selector).scrollIntoView()
+    .not("[disabled]").and("have.text", text).click()  
+});
+
 Cypress.Commands.add('radioBtn', (selector, value) => {
   // eslint-disable-next-line cypress/no-unnecessary-waiting
   cy.findElement(selector).wait(0).should("have.value", value);  
@@ -202,12 +208,35 @@ Cypress.Commands.add("checkBoxOption", (selector,value) => {
     
 });
 
+Cypress.Commands.add("verifyCheckBoxLabel", (selector,expectedLabels) => {
+  const labels = []
+  const length= expectedLabels.length
+  cy.findElement(selector)
+    .should('have.length', length)    
+    .each(($checkbox) => {
+      cy.findElement(`label[for=${$checkbox.attr('id')}]`)        
+        .invoke('text')
+        .then((text) => labels.push(text))     
+    })
+    .then(() => {
+      expect(labels).to.deep.equal(expectedLabels)
+    })
+  
+});
+
 Cypress.Commands.add("clickSideStepper", (stepperSelector,stepperText) => {
   cy.findElement(stepperSelector)
     .should("be.visible")
     .and("have.length", 1)
     .and('contain', stepperText)
     .click();
+});
+
+Cypress.Commands.add("activeStep", (selector) => {
+  cy.findElement(selector)
+    .should("be.visible")
+    .and('have.css', 'color', colors.primary)
+  
 });
 
 Cypress.Commands.add("dropDownClick", (selector) => {
@@ -222,6 +251,16 @@ Cypress.Commands.add("autoCompleteSelection", (selector, inputText, selector1) =
 Cypress.Commands.add("autoCompletePhoneCountrySelection", (selector, inputText, selector1) => {
   cy.findElement(selector).type(inputText, { force: true });
   cy.findElement(selector1).first().click({ force: true });
+    
+});
+
+Cypress.Commands.add("messageDisplays", (selector,alertMessage) => {
+  cy.findElement(selector).should("exist").then(($message) => {
+    let actualTxt = $message.text();
+    cy.log(actualTxt);
+    const formattedTxt = cleanText(actualTxt)
+    expect(formattedTxt).equal(alertMessage)
+  })
     
 });
 

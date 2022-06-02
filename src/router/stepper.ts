@@ -43,6 +43,8 @@ import RequirementCategories
 import ServiceOfferings from "../steps/05-PerformanceRequirements/DOW/ServiceOfferings.vue"
 import ServiceOfferingDetails 
   from "../steps/05-PerformanceRequirements/DOW/ServiceOfferingDetails.vue"
+import DOWSummary 
+  from "../steps/05-PerformanceRequirements/DOW/Summary.vue"
 
 // Step 6 - Government Furnished Equipment
 import GovtFurnishedEquipment from "../steps/06-GovtFurnishedEquipment/Index.vue"
@@ -92,6 +94,10 @@ import {
   FOIARecordResolver,
   A11yRequirementResolver,
   ContractTrainingReq,
+  OfferGroupOfferingsPathResolver,
+  OfferingDetailsPathResolver,
+  DowSummaryPathResolver,
+  RequirementsPathResolver as PerformanceRequirementsPathResolver,
 } from "./resolvers";
 
 export const routeNames = {
@@ -114,6 +120,7 @@ export const routeNames = {
   RequirementCategories: "Requirement_Categories",
   ServiceOfferings: "Service_Offerings",
   ServiceOfferingDetails: "Service_Offering_Details",
+  DOWSummary: "DOW_Summary",
   OptimizeCurrentEnvironment: "Optimize_Current_Environment",
   AnythingASAServiceXaas:"Anything_as_a_Service_Xaas",
   CloudSupportPackages: "Cloud_Support_Packages",
@@ -368,19 +375,21 @@ export const stepperRoutes: Array<StepperRouteConfig> = [
       // },
       {        
         menuText: "Performance Requirements",
-        path: "performance-requirements",
+        path: "/",
         excludeFromMenu: true,
         name: routeNames.RequirementCategories,
         completePercentageWeight: 1,
         component: RequirementCategories,
+        routeResolver: PerformanceRequirementsPathResolver,
       },
       {
         menuText: "Service Offerings",
-        path: "service-offerings",
+        path: "service-offerings/:groupName",
         excludeFromMenu: true,
         name: routeNames.ServiceOfferings,
         completePercentageWeight: 1,
         component: ServiceOfferings,
+        routeResolver: OfferGroupOfferingsPathResolver,
         additionalButtons: [
           {
             buttonText: "I don’t need these cloud resources",
@@ -392,11 +401,23 @@ export const stepperRoutes: Array<StepperRouteConfig> = [
       },
       {
         menuText: "Service Offering Details",
-        path: "service-offering-details",
+        path: "service-offering-details/:groupName/:serviceOffering",
         excludeFromMenu: true,
         name: routeNames.ServiceOfferingDetails,
         completePercentageWeight: 1,
         component: ServiceOfferingDetails,
+        routeResolver: OfferingDetailsPathResolver,
+      },
+      {
+        menuText: "DOW Summary",
+        path: "dow-summary",
+        excludeFromMenu: true,
+        name: routeNames.DOWSummary,
+        completePercentageWeight: 1,
+        component: DOWSummary,
+        routeResolver: DowSummaryPathResolver,
+        backButtonText: 'Back to Contract Details',
+        continueButtonText: 'Wrap up this section',
       },
     ],
   },
@@ -612,6 +633,7 @@ const mapStepRouteToStepperData = (
     stepNumber,
     additionalButtons,
     backButtonText,
+    continueButtonText,
   } = stepperRouteConfig;
 
   let {name} = stepperRouteConfig;
@@ -630,6 +652,7 @@ const mapStepRouteToStepperData = (
     ),
     additionalButtons,
     backButtonText,
+    continueButtonText,
   };
   return stepperStep;
 };
