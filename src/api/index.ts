@@ -22,6 +22,7 @@ import { ClassificationLevelApi } from "./classificationLevels";
 import { ServiceOfferingApi } from "./serviceOffering";
 import { RequiredServicesApi } from "./requiredServices";
 import { SelectedServiceOfferingApi } from "./selectedServiceOffering";
+import { ClassificationInstanceApi } from "./classificationInstance";
 
 export const api = {
 
@@ -31,7 +32,7 @@ export const api = {
   projectOverviewTable: new ProjectOverviewApi(),
   organizationTable: new OrganizationApi(),
   classificationLevelTable: new ClassificationLevelApi(),
-  classificationInstanceTable: new ClassificationLevelApi(),
+  classificationInstanceTable: new ClassificationInstanceApi(),
   contactsTable: new ContactsApi(),
   contractConsiderationsTable: new ContractConsiderationsApi(),
   fairOpportunityTable: new FairOpportunityApi(),

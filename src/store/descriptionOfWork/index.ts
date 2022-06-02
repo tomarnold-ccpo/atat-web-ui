@@ -7,7 +7,7 @@ import {
 } from "vuex-module-decorators";
 import rootStore from "../index";
 import api from "@/api";
-import { ServiceOfferingDTO, SystemChoiceDTO } from "@/api/models";
+import { ClassificationInstanceDTO, SelectedServiceOfferingDTO, ServiceOfferingDTO, SystemChoiceDTO } from "@/api/models";
 import {TABLENAME as ServiceOfferingTableName } from "@/api/serviceOffering"
 import {
   nameofProperty,
@@ -24,6 +24,8 @@ import {
 
 import _, { last } from "lodash";
 import { off } from "process";
+import { SelectedServiceOfferingApi } from "@/api/selectedServiceOffering";
+import { ClassificationInstanceApi } from "@/api/classificationInstance";
 
 
 const ATAT_DESCRIPTION_OF_WORK_KEY = "ATAT_DESCRIPTION_OF_WORK_KEY";
@@ -427,6 +429,26 @@ export class DescriptionOfWorkStore extends VuexModule {
     } catch (error) {
       throw new Error(`error loading Service Offering Groups ${error}`);
     }
+  }
+
+  @Action({rawError: true})
+  public async saveSelectedServiceOffering(data: 
+    SelectedServiceOfferingDTO):Promise<SelectedServiceOfferingDTO>{
+    const sysId = data.sys_id || undefined;
+    const savedSelectedServiceOffering = sysId ? 
+      api.selectedServiceOfferingTable.update(sysId, data) : 
+      api.selectedServiceOfferingTable.create(data);
+    return savedSelectedServiceOffering;
+  }
+
+  @Action({rawError: true})
+  public async saveClassificationInstance(data: 
+    ClassificationInstanceDTO):Promise<ClassificationInstanceDTO>{
+    const sysId = data.sys_id || undefined;
+    const savedClassificationInstance = sysId ? 
+      api.classificationInstanceTable.update(sysId, data) : 
+      api.classificationInstanceTable.create(data);
+    return savedClassificationInstance;
   }
 }
 
