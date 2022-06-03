@@ -56,10 +56,6 @@ export class ClassificationRequirementsStore extends VuexModule {
     }
   }
 
-  @Action({ rawError: true })
-  public async getSelectedClassificationLevels(): Promise<ClassificationLevelDTO[]> {
-    return this.selectedClassificationLevels;
-  }
 
   @Action({ rawError: true })
   public async getAllClassificationLevels(): Promise<ClassificationLevelDTO[]> {
@@ -112,6 +108,12 @@ export class ClassificationRequirementsStore extends VuexModule {
       throw new Error(`error loading Classification Levels ${error}`);
     }
   }
+
+  //getters
+  public get getSelectedClassificationLevels(): ClassificationLevelDTO[]  {
+    return this.selectedClassificationLevels;
+  }
+
 
 }
 const ClassificationRequirements = getModule(ClassificationRequirementsStore);

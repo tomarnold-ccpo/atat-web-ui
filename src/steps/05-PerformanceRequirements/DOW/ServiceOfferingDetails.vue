@@ -331,7 +331,7 @@ export default class ServiceOfferingDetails extends Mixins(SaveOnLeave) {
 
   public async setAvailableClassificationLevels(): Promise<void> {
     this.avlClassificationLevelObjects 
-      = await ClassificationRequirements.getSelectedClassificationLevels();
+      = ClassificationRequirements.getSelectedClassificationLevels;
     this.avlInstancesLength = this.avlClassificationLevelObjects.length;
 
     // if only one classification level selected in Contract Details, set
@@ -372,7 +372,7 @@ export default class ServiceOfferingDetails extends Mixins(SaveOnLeave) {
       this.periods = periods
     }
 
-    const storeData = await ClassificationRequirements.getSelectedClassificationLevels()
+    const storeData = ClassificationRequirements.getSelectedClassificationLevels
     if(storeData) {
       this.classificationLevelsFromStore = storeData
       storeData.forEach((val) => {

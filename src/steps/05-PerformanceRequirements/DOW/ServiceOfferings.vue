@@ -81,7 +81,7 @@ export default class ServiceOfferings extends Mixins(SaveOnLeave) {
         const checkboxItem: Checkbox = {
           id: getIdText(offering.name),
           label: offering.name,
-          value: offering.sys_id,
+          value: offering.sysId || "",
           description: offering.description,
         }
         this.checkboxItems.push(checkboxItem);

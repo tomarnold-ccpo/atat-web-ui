@@ -1,35 +1,40 @@
+import api from "@/api";
+import {
+  ClassificationInstanceDTO, ClassificationLevelDTO,
+  SelectedServiceOfferingDTO, ServiceOfferingDTO, SystemChoiceDTO
+} from "@/api/models";
+import { TABLENAME as ServiceOfferingTableName } from "@/api/serviceOffering";
+import _, { last } from "lodash";
+import Vue from "vue";
 import {
   Action,
   getModule,
   Module,
   Mutation,
-  VuexModule,
+  VuexModule
 } from "vuex-module-decorators";
-import rootStore from "../index";
-import api from "@/api";
-import { ClassificationInstanceDTO, SelectedServiceOfferingDTO, ServiceOfferingDTO, SystemChoiceDTO } from "@/api/models";
-import {TABLENAME as ServiceOfferingTableName } from "@/api/serviceOffering"
 import {
-  nameofProperty,
-  storeDataToSession,
-  retrieveSession,
-} from "../helpers";
-import Vue from "vue";
-import { 
-  stringObj, 
-  DOWServiceOfferingGroup, 
-  DOWServiceOffering, 
-  DOWClassificationInstance 
+  DOWClassificationInstance, DOWServiceOffering, DOWServiceOfferingGroup
 } from "../../../types/Global";
+import {
+  nameofProperty, retrieveSession, storeDataToSession
+} from "../helpers";
+import rootStore from "../index";
 
-import _, { last } from "lodash";
-import { off } from "process";
-import { SelectedServiceOfferingApi } from "@/api/selectedServiceOffering";
-import { ClassificationInstanceApi } from "@/api/classificationInstance";
 
 
 const ATAT_DESCRIPTION_OF_WORK_KEY = "ATAT_DESCRIPTION_OF_WORK_KEY";
 
+const getServiceofferingById = (sysId: string, serviceOfferings: ServiceOfferingDTO[]): 
+ServiceOfferingDTO | undefined => {
+  return serviceOfferings.find(offering=> offering.sys_id === sysId);
+}
+
+const getClassificationLevelsById = (sysId: string,  
+  classificationLevels: ClassificationLevelDTO[]): 
+ClassificationLevelDTO | undefined => {
+  return classificationLevels.find(classificationLevel=> classificationLevel.sys_id === sysId);  
+}
 @Module({
   name: "DescriptionOfWork",
   namespaced: true,
@@ -268,7 +273,7 @@ export class DescriptionOfWorkStore extends VuexModule {
       const currentOfferings = this.DOWObject[groupIndex].serviceOfferings;
       // add selectedOfferings to DOWObject
       selectedOfferingSysIds.forEach((selectedOfferingSysId) => {
-        if (!currentOfferings.some((e) => e.sys_id === selectedOfferingSysId)) {
+        if (!currentOfferings.some((e) => e.sysId === selectedOfferingSysId)) {
           const foundOffering 
             = this.serviceOfferings.find((e) => e.sys_id === selectedOfferingSysId);
           if (foundOffering) {
@@ -277,7 +282,8 @@ export class DescriptionOfWorkStore extends VuexModule {
               "sys_id": selectedOfferingSysId,
               classificationInstances: [],
               description: foundOffering.description,
-              sequence: foundOffering.sequence
+              sequence: foundOffering.sequence,
+              selectedOfferingSysId : "",
             }
             currentOfferings.push(offering);
             // todo future ticket - add to SNOW db
@@ -289,9 +295,9 @@ export class DescriptionOfWorkStore extends VuexModule {
       const currentOfferingsClone = _.cloneDeep(currentOfferings);
       // const currentOfferingsClone = JSON.parse(JSON.stringify(currentOfferings));
       currentOfferingsClone.forEach((offering) => {
-        const sysId = offering.sys_id;
+        const sysId = offering.sysId || "";
         if (!selectedOfferingSysIds.includes(sysId)) {
-          const i = currentOfferings.findIndex(e => e.sys_id === sysId);
+          const i = currentOfferings.findIndex(e => e.sysId === sysId);
           currentOfferings.splice(i, 1);
           // todo future ticket - remove from SNOW db
         }
@@ -299,7 +305,7 @@ export class DescriptionOfWorkStore extends VuexModule {
       this.currentOfferingName = currentOfferings.length > 0
         ? currentOfferings[0].name : "";
       this.currentOfferingSysId = currentOfferings.length > 0 
-        ? currentOfferings[0].sys_id : "";
+        ? currentOfferings[0].sysId || "" : ""
     }
   }
 
@@ -355,9 +361,10 @@ export class DescriptionOfWorkStore extends VuexModule {
     serviceOfferingsForGroup.forEach((obj) => {
       const offering: DOWServiceOffering = {
         name: obj.name,
-        "sys_id": obj.sys_id || "",
+        sysId: obj.sys_id|| "",
         sequence: obj.sequence,
         description: obj.description,
+        selectedOfferingSysId:"",
       };
       serviceOfferings.push(offering);
     })
@@ -450,6 +457,17 @@ export class DescriptionOfWorkStore extends VuexModule {
       api.classificationInstanceTable.create(data);
     return savedClassificationInstance;
   }
+
+  @Action({rawError: true})
+  public async loadSelectedServiceOffering(id: string): Promise<SelectedServiceOfferingDTO> {
+    return api.selectedServiceOfferingTable.retrieve(id);
+  }
+
+  @Action({rawError: true})
+  public async loadClassificationInstance(id: string): Promise<ClassificationInstanceDTO> {
+    return api.classificationInstanceTable.retrieve(id);
+  }
+
 }
 
 const DescriptionOfWork = getModule(DescriptionOfWorkStore);

@@ -211,7 +211,8 @@ export interface DOWClassificationInstance {
 export interface DOWServiceOffering {
   name: string;
   otherOfferingName?: string;
-  "sys_id": string;
+  sysId?: string;
+  selectedOfferingSysId: string;
   description: string;
   classificationInstances?: DOWClassificationInstance[];
   sequence: string;

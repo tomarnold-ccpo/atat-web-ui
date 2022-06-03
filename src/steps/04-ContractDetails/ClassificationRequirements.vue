@@ -125,7 +125,7 @@ export default class ClassificationRequirements extends Mixins(SaveOnLeave) {
     const IL6Checkbox = this.checkboxItems.find(e => e.label.indexOf("IL6") > -1);
     this.IL6SysId = IL6Checkbox?.value || "false";
 
-    const storeData = await classificationRequirements.getSelectedClassificationLevels()
+    const storeData = classificationRequirements.getSelectedClassificationLevels;
     if(storeData) {
       this.savedData = storeData
       storeData.forEach((val) => {
