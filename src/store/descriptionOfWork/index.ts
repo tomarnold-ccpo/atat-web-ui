@@ -16,17 +16,21 @@ import {
 } from "../helpers";
 import Vue from "vue";
 import { 
-  stringObj, 
   DOWServiceOfferingGroup, 
   DOWServiceOffering, 
   DOWClassificationInstance 
 } from "../../../types/Global";
 
 import _, { last } from "lodash";
-import { off } from "process";
 
 
 const ATAT_DESCRIPTION_OF_WORK_KEY = "ATAT_DESCRIPTION_OF_WORK_KEY";
+
+export interface DOWSStep {
+  previous: DOWSStep | undefined;
+  next: DOWSStep | undefined;
+  path: string;
+}
 
 @Module({
   name: "DescriptionOfWork",
@@ -101,6 +105,10 @@ export class DescriptionOfWorkStore extends VuexModule {
 
   }
 
+  public get currentGroupHasSelections(): boolean {
+    return this.serviceOfferingsForGroup.length > 0;
+  }
+
   public get nextServiceOffering(): string | undefined {
  
     const serviceOfferings = this.serviceOfferingsForGroup;
@@ -115,7 +123,7 @@ export class DescriptionOfWorkStore extends VuexModule {
 
     if(currentServiceIndex < 0)
     {
-      throw new Error(`unable to get index for current offer ${this.currentOfferingName}`);
+      return undefined;
     }
 
     if((currentServiceIndex + 2) <= serviceOfferings.length )
@@ -207,6 +215,11 @@ export class DescriptionOfWorkStore extends VuexModule {
 
     return currentOfferingIndex >=0;
     
+  }
+
+  public get canGetPreviousOfferingGroup(): boolean {
+    const currentGroupIndex = this.currentOfferingGroupIndex;
+    return currentGroupIndex -1 >=0;
   }
 
   public get selectedServiceOfferingGroups(): string[] {
@@ -308,7 +321,19 @@ export class DescriptionOfWorkStore extends VuexModule {
 
   @Mutation
   public setCurrentOfferingGroupId(value: string): void {
+    debugger;
+    
     this.currentGroupId = value;
+
+    const offerings = this.DOWObject
+      .find(group=>group.serviceOfferingGroupId === value)?.serviceOfferings
+    
+    if(offerings && offerings.length){
+      this.currentOfferingName = offerings[offerings.length - 1].name;
+    }
+    else{
+      this.currentOfferingName = "";
+    }
   }
 
 

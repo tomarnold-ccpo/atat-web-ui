@@ -101,6 +101,7 @@ export default class RequirementCategories extends Mixins(SaveOnLeave) {
   }
 
   public async loadOnEnter(): Promise<void> {
+
     this.serviceOfferingGroups = await DescriptionOfWork.getServiceOfferingGroups();
     this.serviceOfferingGroups.forEach((serviceOfferingGroup) => {
       const checkboxItem: Checkbox = {
@@ -121,12 +122,21 @@ export default class RequirementCategories extends Mixins(SaveOnLeave) {
       }
 
       const selectedOfferingGroups = DescriptionOfWork.selectedServiceOfferingGroups;
-      const validSelections = selectedOfferingGroups.reduce<string[]>((accumulator, current)=>{
+
+      const validXaasSelections = selectedOfferingGroups.reduce<string[]>((accumulator, current)=>{
         const itemIndex = this.xaasCheckboxItems.findIndex(item=>item.value === current);
         return itemIndex >=0 ? [...accumulator, 
           this.xaasCheckboxItems[itemIndex].value] : accumulator;
       },[]);
-      this.selectedXaasOptions.push(...validSelections);
+      this.selectedXaasOptions.push(...validXaasSelections);
+
+      const validClousSupportSelections = 
+      selectedOfferingGroups.reduce<string[]>((accumulator, current)=>{
+        const itemIndex = this.cloudSupportCheckboxItems.findIndex(item=>item.value=== current);
+        return itemIndex >=0 ? [...accumulator, 
+          this.cloudSupportCheckboxItems[itemIndex].value] : accumulator;
+      },[]);
+      this.cloudSupportSelectedOptions.push(...validClousSupportSelections);
 
 
     });
