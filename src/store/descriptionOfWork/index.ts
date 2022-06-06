@@ -20,6 +20,9 @@ import {
   DOWServiceOffering, 
   DOWClassificationInstance 
 } from "../../../types/Global";
+import {
+  getOfferingGroupServicesPath
+} from "@/router/resolvers"
 
 import _, { last } from "lodash";
 
@@ -27,10 +30,14 @@ import _, { last } from "lodash";
 const ATAT_DESCRIPTION_OF_WORK_KEY = "ATAT_DESCRIPTION_OF_WORK_KEY";
 
 export interface DOWSStep {
-  previous: DOWSStep | undefined;
-  next: DOWSStep | undefined;
+  previous?: DOWSStep | undefined;
+  next?: DOWSStep | undefined;
   path: string;
+  groupName: string;
+  isParent: boolean;
 }
+
+
 
 @Module({
   name: "DescriptionOfWork",
@@ -45,6 +52,8 @@ export class DescriptionOfWorkStore extends VuexModule {
 
   // selectedOfferingGroups: stringObj[] = [];
   DOWObject: DOWServiceOfferingGroup[] = [];
+
+  DOWSteps: DOWSStep[] = [];
 
   currentGroupId = "";
   currentOfferingName = "";
@@ -181,6 +190,11 @@ export class DescriptionOfWorkStore extends VuexModule {
     return undefined;
   }
 
+  public get isNextGroupNoneSelected(): boolean {
+    const nextGroup = this.nextOfferingGroup;
+    return nextGroup ===  "XaaS_NONE" || nextGroup ==="Cloud_NONE";
+  }
+
   public get prevOfferingGroup(): string | undefined {
 
     const currentGroupIndex = this.DOWObject
@@ -239,6 +253,10 @@ export class DescriptionOfWorkStore extends VuexModule {
     return (xaasNoneSelected !==undefined && cloudNoneSelected !== undefined);
   }
 
+  public get isNoneSelected(): boolean {
+    return this.currentGroupId ===  "XaaS_NONE" || this.currentGroupId ==="Cloud_NONE";
+  }
+
   @Mutation
   private setInitialized(value: boolean) {
     this.initialized = value;
@@ -256,6 +274,9 @@ export class DescriptionOfWorkStore extends VuexModule {
 
   @Mutation
   public setSelectedOfferingGroups(selectedOfferingGroups: string[]): void {
+
+    this.DOWSteps = [];
+
     selectedOfferingGroups.forEach((selectedOfferingGroup) => {
       if (!this.DOWObject.some(e => e.serviceOfferingGroupId === selectedOfferingGroup)) {
         const offeringGroup: DOWServiceOfferingGroup = {
@@ -276,6 +297,14 @@ export class DescriptionOfWorkStore extends VuexModule {
         this.DOWObject[0].serviceOfferingGroupId : "";
       this.currentOfferingName = "";
       this.currentOfferingSysId = "";
+
+      //create a dow step for each offering group
+      const dowStep: DOWSStep = {
+        groupName:  selectedOfferingGroup,
+        path : getOfferingGroupServicesPath(selectedOfferingGroup),
+        isParent: true
+      }
+      this.DOWSteps.push(dowStep);
     });
   }
 

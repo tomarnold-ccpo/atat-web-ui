@@ -4,8 +4,6 @@ import { sanitizeOfferingName } from "@/helpers";
 import { routeNames } from "../stepper";
 import { RouteDirection, StepPathResolver, StepRouteResolver } from "@/store/steps/types";
 import DescriptionOfWork from "@/store/descriptionOfWork";
-import { dir } from "console";
-import { directive } from "vue/types/umd";
 
 export const AcorsRouteResolver = (current: string): string => {
   const hasAlternativeContactRep = AcquisitionPackage.hasAlternativeContactRep;
@@ -95,6 +93,11 @@ export const ContractTrainingReq = (current: string): string => {
     : routeNames.Training;
 };
 
+
+
+const xaaSNoneValue = "XaaS_NONE";
+const cloudNoneValue = "Cloud_NONE";
+
 const basePerformanceRequirementsPath =  `performance-requirements`;
 const descriptionOfWorkSummaryPath=  "performance-requirements/dow-summary";
 
@@ -106,7 +109,7 @@ const getServiceOfferingsDetailsPath= (groupId: string, serviceName: string)=> {
 }
   
 
-const getOfferingGroupServicesPath = (groupId: string)=>
+export const getOfferingGroupServicesPath = (groupId: string)=>
   `${basePerformanceRequirementsPath}/service-offerings/${groupId.toLowerCase()}`;
 
 const displayPreviousServiceOffering = ()=> {
@@ -138,32 +141,10 @@ const getPreviousofferingGroup = ()=> {
 export const RequirementsPathResolver = (current: string, direction: string): string =>
 {
 
-  if(current === routeNames.ClassificationRequirements){
-    return basePerformanceRequirementsPath;
-  }
-
-  if(current === routeNames.ServiceOfferings){
-    const canGetPreviousOfferingGroup = DescriptionOfWork.canGetPreviousOfferingGroup;
-
-    if(canGetPreviousOfferingGroup){
-      const previousGroup = getPreviousofferingGroup();
-      DescriptionOfWork.setCurrentOfferingGroupId(previousGroup);
-      if(!DescriptionOfWork.currentGroupHasSelections){
-        return OfferGroupOfferingsPathResolver(current, direction);
-      }
-
-      if(DescriptionOfWork.currentGroupHasSelections){
-        return OfferingDetailsPathResolver(current, direction);
-      }
-    }
-
-  }
-
   return basePerformanceRequirementsPath;
 }
 
-export const OfferGroupOfferingsPathResolver = (current: string, 
-  direction: string): string => {
+export const OfferGroupOfferingsPathResolver = (current: string, direction: string): string => {
 
   if(current === routeNames.RequirementCategories)
   {
@@ -173,6 +154,36 @@ export const OfferGroupOfferingsPathResolver = (current: string,
     //we go straight to the summary for now... 
     //this might change slightly in the future...
       return descriptionOfWorkSummaryPath;
+    }
+
+    if(DescriptionOfWork.isNoneSelected && DescriptionOfWork.isEndOfServiceGroups)
+      return descriptionOfWorkSummaryPath;
+  }
+  // else 
+  // {
+  //   const currentGroup = DescriptionOfWork.nextOfferingGroup;
+  //   if(currentGroup){
+  //     DescriptionOfWork.setCurrentOfferingGroupId(currentGroup);
+  //   }
+  // }
+
+
+  if(current === routeNames.DOWSummary){
+    debugger;
+
+    if(!DescriptionOfWork.currentGroupHasSelections || 
+      (DescriptionOfWork.isNoneSelected))
+    {
+      //try to get previous group
+      if(DescriptionOfWork.canGetPreviousOfferingGroup){
+        const currentGroup = DescriptionOfWork.nextOfferingGroup;
+        if(currentGroup){
+          DescriptionOfWork.setCurrentOfferingGroupId(currentGroup);
+        }
+      }
+      else{
+        return basePerformanceRequirementsPath;
+      }
     }
   }
 
@@ -189,15 +200,14 @@ export const OfferingDetailsPathResolver =(current: string, direction: string): 
   if(current === routeNames.ServiceOfferings){
     if(!currentGroupHasSelections){
       //try to get next group
-      const nextGroup = DescriptionOfWork.nextOfferingGroup;
-      if(nextGroup){
+      const nextGroup = DescriptionOfWork.nextOfferingGroup as string;
+      if(nextGroup && !(nextGroup === xaaSNoneValue || nextGroup == cloudNoneValue))
         DescriptionOfWork.setCurrentOfferingGroupId(nextGroup);
-        return OfferGroupOfferingsPathResolver(current, direction);
-      }
-      else{
+      return OfferGroupOfferingsPathResolver(current, direction);
+    }
+    else{
           
-        return descriptionOfWorkSummaryPath;
-      }
+      return descriptionOfWorkSummaryPath;
     }
   }
 
