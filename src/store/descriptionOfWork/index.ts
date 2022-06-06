@@ -231,6 +231,14 @@ export class DescriptionOfWorkStore extends VuexModule {
       group.serviceOfferings.flatMap(offering=>offering.name)).flat();
   }
 
+  public get noCategoriesSelected(): boolean {
+    const xaasNoneSelected = 
+    this.DOWObject.find(group=>group.serviceOfferingGroupId === "XaaS_NONE");
+    const cloudNoneSelected = 
+    this.DOWObject.find(group=> group.serviceOfferingGroupId === "Cloud_NONE");
+    return (xaasNoneSelected !==undefined && cloudNoneSelected !== undefined);
+  }
+
   @Mutation
   private setInitialized(value: boolean) {
     this.initialized = value;

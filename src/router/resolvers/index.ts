@@ -137,7 +137,6 @@ const getPreviousofferingGroup = ()=> {
 
 export const RequirementsPathResolver = (current: string, direction: string): string =>
 {
-  debugger;
 
   if(current === routeNames.ClassificationRequirements){
     return basePerformanceRequirementsPath;
@@ -168,8 +167,8 @@ export const OfferGroupOfferingsPathResolver = (current: string,
 
   if(current === routeNames.RequirementCategories)
   {
-
-    if(DescriptionOfWork.currentGroupId === "XaaS_NONE")
+   
+    if(DescriptionOfWork.noCategoriesSelected)
     {
     //we go straight to the summary for now... 
     //this might change slightly in the future...
@@ -183,7 +182,6 @@ export const OfferGroupOfferingsPathResolver = (current: string,
 }
 
 export const OfferingDetailsPathResolver =(current: string, direction: string): string => {
-  debugger;
 
   const currentGroupHasSelections = DescriptionOfWork.currentGroupHasSelections;
   const atBeginningOfOfferingGroups = DescriptionOfWork.isAtBeginningOfServiceGroups;
@@ -218,8 +216,6 @@ export const OfferingDetailsPathResolver =(current: string, direction: string): 
 }
 
 export const DowSummaryPathResolver = (current: string, direction: string): string =>{
-
-  debugger;
   
   // coming from service offering details step
   if(current === routeNames.ServiceOfferingDetails){

@@ -103,6 +103,7 @@ export default class RequirementCategories extends Mixins(SaveOnLeave) {
   public async loadOnEnter(): Promise<void> {
 
     this.serviceOfferingGroups = await DescriptionOfWork.getServiceOfferingGroups();
+
     this.serviceOfferingGroups.forEach((serviceOfferingGroup) => {
       const checkboxItem: Checkbox = {
         id: this.getIdText(serviceOfferingGroup.value),
@@ -120,27 +121,8 @@ export default class RequirementCategories extends Mixins(SaveOnLeave) {
       } else {
         this.cloudSupportCheckboxItems.push(checkboxItem);
       }
-
-      const selectedOfferingGroups = DescriptionOfWork.selectedServiceOfferingGroups;
-
-      const validXaasSelections = selectedOfferingGroups.reduce<string[]>((accumulator, current)=>{
-        const itemIndex = this.xaasCheckboxItems.findIndex(item=>item.value === current);
-        return itemIndex >=0 ? [...accumulator, 
-          this.xaasCheckboxItems[itemIndex].value] : accumulator;
-      },[]);
-      this.selectedXaasOptions.push(...validXaasSelections);
-
-      const validClousSupportSelections = 
-      selectedOfferingGroups.reduce<string[]>((accumulator, current)=>{
-        const itemIndex = this.cloudSupportCheckboxItems.findIndex(item=>item.value=== current);
-        return itemIndex >=0 ? [...accumulator, 
-          this.cloudSupportCheckboxItems[itemIndex].value] : accumulator;
-      },[]);
-      this.cloudSupportSelectedOptions.push(...validClousSupportSelections);
-
-
     });
-    
+
     const xaasNone: Checkbox = {
       id: "XaaSNoneApply",
       label: "None of these apply to my acquisition.",
@@ -154,6 +136,24 @@ export default class RequirementCategories extends Mixins(SaveOnLeave) {
       value: this.cloudNoneValue, 
     }
     this.cloudSupportCheckboxItems.push(cloudSupportNone)
+
+    const selectedOfferingGroups = DescriptionOfWork.selectedServiceOfferingGroups;
+
+    const validXaasSelections = selectedOfferingGroups.reduce<string[]>((accumulator, current)=>{
+      const itemIndex = this.xaasCheckboxItems.findIndex(item=>item.value === current);
+      return itemIndex >=0 ? [...accumulator, 
+        this.xaasCheckboxItems[itemIndex].value] : accumulator;
+    },[]);
+    this.selectedXaasOptions.push(...validXaasSelections);
+
+    const validClousSupportSelections = 
+      selectedOfferingGroups.reduce<string[]>((accumulator, current)=>{
+        debugger;
+        const itemIndex = this.cloudSupportCheckboxItems.findIndex(item=>item.value=== current);
+        return itemIndex >=0 ? [...accumulator, 
+          this.cloudSupportCheckboxItems[itemIndex].value] : accumulator;
+      },[]);
+    this.cloudSupportSelectedOptions.push(...validClousSupportSelections);   
 
   }
 
