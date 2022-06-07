@@ -211,6 +211,24 @@ export class DescriptionOfWorkStore extends VuexModule {
     
   }
 
+  public get canGetNextServiceOffering(): boolean {
+    const currentOfferingIndex = this.currentOfferingIndex;
+    return currentOfferingIndex + 2  <= this.serviceOfferings.length;
+    
+  }
+
+  public get canGetNextOfferingGroup(): boolean {
+
+    const currentGroupIndex = this.DOWObject
+      .findIndex(group=> group.serviceOfferingGroupId === this.currentGroupId);
+
+    if(currentGroupIndex < 0){
+      return false;
+    }
+ 
+    return (currentGroupIndex + 2) <= this.DOWObject.length
+  }
+
   public get selectedServiceOfferingGroups(): string[] {
     return this.DOWObject.map(group=> group.serviceOfferingGroupId);
   }
@@ -218,6 +236,11 @@ export class DescriptionOfWorkStore extends VuexModule {
   public get selectedServiceOfferings(): string[] {
     return this.DOWObject.map(group=>
       group.serviceOfferings.flatMap(offering=>offering.name)).flat();
+  }
+
+  public get currentGroupHasSelections(): boolean {
+    return this.DOWObject[this.currentOfferingGroupIndex]
+      .serviceOfferings.length > 0;
   }
 
   @Mutation
@@ -338,6 +361,9 @@ export class DescriptionOfWorkStore extends VuexModule {
   @Mutation
   public setCurrentOfferingGroupId(value: string): void {
     this.currentGroupId = value;
+    const serviceOfferings = this.serviceOfferingsForGroup; 
+    this.currentOfferingName = serviceOfferings.length > 0 ?
+      serviceOfferings[0].name: "";
   }
 
 

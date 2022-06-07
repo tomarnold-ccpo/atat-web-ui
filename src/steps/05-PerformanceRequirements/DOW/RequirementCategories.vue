@@ -119,18 +119,8 @@ export default class RequirementCategories extends Mixins(SaveOnLeave) {
       } else {
         this.cloudSupportCheckboxItems.push(checkboxItem);
       }
-
-      const selectedOfferingGroups = DescriptionOfWork.selectedServiceOfferingGroups;
-      const validSelections = selectedOfferingGroups.reduce<string[]>((accumulator, current)=>{
-        const itemIndex = this.xaasCheckboxItems.findIndex(item=>item.value === current);
-        return itemIndex >=0 ? [...accumulator, 
-          this.xaasCheckboxItems[itemIndex].value] : accumulator;
-      },[]);
-      this.selectedXaasOptions.push(...validSelections);
-
-
     });
-    
+
     const xaasNone: Checkbox = {
       id: "XaaSNoneApply",
       label: "None of these apply to my acquisition.",
@@ -144,6 +134,21 @@ export default class RequirementCategories extends Mixins(SaveOnLeave) {
       value: this.cloudNoneValue, 
     }
     this.cloudSupportCheckboxItems.push(cloudSupportNone)
+
+    const selectedOfferingGroups = DescriptionOfWork.selectedServiceOfferingGroups;
+    const validSelections = selectedOfferingGroups.reduce<string[]>((accumulator, current)=>{
+      const itemIndex = this.xaasCheckboxItems.findIndex(item=>item.value === current);
+      return itemIndex >=0 ? [...accumulator, 
+        this.xaasCheckboxItems[itemIndex].value] : accumulator;
+    },[]);
+    this.selectedXaasOptions.push(...validSelections);
+    
+    const validCloudSelections = selectedOfferingGroups.reduce<string[]>((accumulator, current)=>{
+      const itemIndex = this.cloudSupportCheckboxItems.findIndex(item=>item.value === current);
+      return itemIndex >=0 ? [...accumulator, 
+        this.cloudSupportCheckboxItems[itemIndex].value] : accumulator;
+    },[]);
+    this.cloudSupportSelectedOptions.push(...validCloudSelections);
 
   }
 
