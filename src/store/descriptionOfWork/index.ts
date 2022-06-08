@@ -49,6 +49,9 @@ export class DescriptionOfWorkStore extends VuexModule {
   // selectedOfferingGroups: stringObj[] = [];
   DOWObject: DOWServiceOfferingGroup[] = [];
 
+  //list of required services -- this is synchronized to back end
+  requiredServices: SelectedServiceOfferingDTO[] = [];
+
   currentGroupId = "";
   currentOfferingName = "";
   currentOfferingSysId = "";
@@ -484,6 +487,23 @@ export class DescriptionOfWorkStore extends VuexModule {
       api.classificationInstanceTable.update(sysId, data) : 
       api.classificationInstanceTable.create(data);
     return savedClassificationInstance;
+  }
+
+  public async saveclassificationInstances(data: ClassificationInstanceDTO[]):
+   Promise<ClassificationInstanceDTO[]>{
+ 
+    try {
+       
+      //create a save call for each classification instance
+      const calls = data.map(instance=> this.saveClassificationInstance(instance));
+      const savedInstances = await Promise.all(calls);
+      return savedInstances;
+       
+    } catch (error) {
+      throw new Error(`error saving classification instances ${error}`);
+       
+    }
+    
   }
 
   @Action({rawError: true})
