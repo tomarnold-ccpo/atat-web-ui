@@ -113,7 +113,7 @@ export default class RequirementCategories extends Mixins(SaveOnLeave) {
 
   public async loadOnEnter(): Promise<void> {
     const periods = await Periods.loadPeriods();
-    const classifications = await classificationRequirements.getSelectedClassificationLevels()
+    const classifications = classificationRequirements.getSelectedClassificationLevels;
     if (periods && periods.length <= 0) {
       this.showAlert = true
       this.isPeriodsDataMissing = true

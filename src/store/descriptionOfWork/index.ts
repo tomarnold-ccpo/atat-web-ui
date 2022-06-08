@@ -1,10 +1,11 @@
 import api from "@/api";
 import {
   ClassificationInstanceDTO, ClassificationLevelDTO,
+  RequiredServicesDTO,
   SelectedServiceOfferingDTO, ServiceOfferingDTO, SystemChoiceDTO
 } from "@/api/models";
 import { TABLENAME as ServiceOfferingTableName } from "@/api/serviceOffering";
-import _, { last } from "lodash";
+import _, { last, differenceWith, remove } from "lodash";
 import Vue from "vue";
 import {
   Action,
@@ -504,6 +505,52 @@ export class DescriptionOfWorkStore extends VuexModule {
        
     }
     
+  }
+
+
+  public async removeRequiredServices(requiredServices: RequiredServicesDTO[]): Promise<boolean>{
+    try {
+
+      const calls = requiredServices.reduce<Promise<void>[]>((previous, current)=>  {
+        const values = [...previous];
+
+        if(current.sys_id){
+          values.push(api.requiredServicesTables.remove(current.sys_id));
+        }
+        return values;
+
+      }, []);
+
+      await Promise.all(calls);
+      return true;
+        
+    } catch (error) {
+      console.error(`error occurred removing required services`);
+      return false;
+    }
+  }
+
+  //syncrhonizes back end with DOW
+  public async saveRequiredServices(requiredServices: RequiredServicesDTO[], 
+    offeringGroups: DOWServiceOfferingGroup[])
+  :Promise<RequiredServicesDTO>{
+    this.DOWObject[0].sequence
+    
+    //get services to delete
+    const servicesToDelete = differenceWith<RequiredServicesDTO, DOWServiceOfferingGroup>
+    // eslint-disable-next-line camelcase
+    (requiredServices, offeringGroups,({sys_id}, {requiredService})=> sys_id === requiredService);
+
+    //delete the uneeded services
+    const deleted = await this.removeRequiredServices(servicesToDelete);
+
+    if(!deleted)
+    {
+      throw new Error("error occurred removing obselete services");       
+    }
+
+
+
   }
 
   @Action({rawError: true})

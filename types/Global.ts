@@ -221,6 +221,8 @@ export interface DOWServiceOffering {
 }
 
 export interface DOWServiceOfferingGroup {
+  //maps back to a required service object used to synchronize to back end
+  requiredService: string;
   serviceOfferingGroupId: string;
   sequence: number;
   serviceOfferings: DOWServiceOffering[];

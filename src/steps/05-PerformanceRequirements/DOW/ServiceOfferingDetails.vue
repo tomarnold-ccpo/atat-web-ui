@@ -357,7 +357,7 @@ export default class ServiceOfferingDetails extends Mixins(SaveOnLeave) {
   public async loadOnEnter(): Promise<void> {
     // get classification levels selected in step 4 Contract Details
     this.avlClassificationLevelObjects 
-      = await ClassificationRequirements.getSelectedClassificationLevels();
+      = ClassificationRequirements.getSelectedClassificationLevels;
 
     // TODO: if no classification levels selected in step 4, show warning alert
     // ticket AT-7502
