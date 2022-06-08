@@ -108,7 +108,7 @@ export class DescriptionOfWorkStore extends VuexModule {
 
   }
 
-  public get nextServiceOffering(): string | undefined {
+  public get nextServiceOffering(): { name: string, sysId: string} | undefined {
  
     const serviceOfferings = this.serviceOfferingsForGroup;
 
@@ -128,13 +128,13 @@ export class DescriptionOfWorkStore extends VuexModule {
     if((currentServiceIndex + 2) <= serviceOfferings.length )
     {
       const nextOffering = serviceOfferings[currentServiceIndex + 1];
-      return nextOffering.name
+      return { name: nextOffering.name, sysId: nextOffering.sys_id }
     }
 
     return undefined;
   }
 
-  public get previousServiceOffering(): string | undefined {
+  public get previousServiceOffering(): { name: string, sysId: string } | undefined {
 
     const serviceOfferings = this.serviceOfferingsForGroup;
 
@@ -155,7 +155,7 @@ export class DescriptionOfWorkStore extends VuexModule {
     {
       const serviceIndex = currentServiceIndex > 0 ? currentServiceIndex - 1: currentServiceIndex;
       const nextOffering = serviceOfferings[serviceIndex];
-      return nextOffering.name
+      return { name: nextOffering.name, sysId: nextOffering.sys_id }
     }
 
     return undefined;
@@ -194,7 +194,7 @@ export class DescriptionOfWorkStore extends VuexModule {
     return nextGroup;
   }
 
-  public get lastOfferingForGroup(): string | undefined {
+  public get lastOfferingForGroup(): { name: string, sysId: string } | undefined {
 
     const currentGroupIndex = this.DOWObject
       .findIndex(group=> group.serviceOfferingGroupId === this.currentGroupId);
@@ -205,7 +205,9 @@ export class DescriptionOfWorkStore extends VuexModule {
   
     const lastOffering =  last(this.DOWObject[currentGroupIndex].serviceOfferings);
 
-    return lastOffering ? lastOffering.name : undefined;
+    return lastOffering 
+      ? { name: lastOffering.name, sysId: lastOffering.sys_id } 
+      : undefined;
   }
 
   public get canGetPreviousServiceOffering(): boolean {
@@ -237,6 +239,9 @@ export class DescriptionOfWorkStore extends VuexModule {
 
   @Mutation
   private setServiceOfferingGroups(value: SystemChoiceDTO[]) {
+    value.forEach((value, index) => {
+      value.sequence = index;
+    });
     this.serviceOfferingGroups = value;
   }
 
@@ -244,8 +249,10 @@ export class DescriptionOfWorkStore extends VuexModule {
   public setSelectedOfferingGroups(selectedOfferingGroups: string[]): void {
     selectedOfferingGroups.forEach((selectedOfferingGroup) => {
       if (!this.DOWObject.some(e => e.serviceOfferingGroupId === selectedOfferingGroup)) {
+        const group = this.serviceOfferingGroups.find(e => e.value === selectedOfferingGroup)
         const offeringGroup: DOWServiceOfferingGroup = {
           serviceOfferingGroupId: selectedOfferingGroup,
+          sequence: group?.sequence || 0,
           serviceOfferings: []
         }
         this.DOWObject.push(offeringGroup);
@@ -258,6 +265,9 @@ export class DescriptionOfWorkStore extends VuexModule {
           // todo future ticket - remove from SNOW db
         }
       });
+
+      this.DOWObject.sort((a, b) => a.sequence > b.sequence ? 1 : -1);
+
       this.currentGroupId = this.DOWObject.length > 0 ? 
         this.DOWObject[0].serviceOfferingGroupId : "";
       this.currentOfferingName = "";
@@ -302,6 +312,11 @@ export class DescriptionOfWorkStore extends VuexModule {
           // todo future ticket - remove from SNOW db
         }
       });
+
+      this.DOWObject[groupIndex].serviceOfferings.sort(
+        (a, b) => parseInt(a.sequence) > parseInt(b.sequence) ? 1 : -1
+      );
+
       this.currentOfferingName = currentOfferings.length > 0
         ? currentOfferings[0].name : "";
       this.currentOfferingSysId = currentOfferings.length > 0 
@@ -310,8 +325,21 @@ export class DescriptionOfWorkStore extends VuexModule {
   }
 
   @Mutation
-  public setCurrentOffering(value: string): void {
-    this.currentOfferingName = value;
+  public async setOfferingDetails(instancesData: DOWClassificationInstance[]): Promise<void> {
+    const groupIndex = this.DOWObject.findIndex(
+      obj => obj.serviceOfferingGroupId === this.currentGroupId
+    );
+    const offeringIndex = this.DOWObject[groupIndex].serviceOfferings.findIndex(
+      obj => obj.sys_id === this.currentOfferingSysId
+    );
+    this.DOWObject[groupIndex].serviceOfferings[offeringIndex].classificationInstances
+      = instancesData;
+  }
+
+  @Mutation
+  public setCurrentOffering(value: { name: string, sysId: string }): void {
+    this.currentOfferingName = value.name;
+    this.currentOfferingSysId = value.sysId;
   }
 
   @Mutation
