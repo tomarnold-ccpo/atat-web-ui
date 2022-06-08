@@ -128,7 +128,7 @@ export class DescriptionOfWorkStore extends VuexModule {
     if((currentServiceIndex + 2) <= serviceOfferings.length )
     {
       const nextOffering = serviceOfferings[currentServiceIndex + 1];
-      return { name: nextOffering.name, sysId: nextOffering.sys_id }
+      return { name: nextOffering.name, sysId: nextOffering.sysId || "" }
     }
 
     return undefined;
@@ -155,7 +155,7 @@ export class DescriptionOfWorkStore extends VuexModule {
     {
       const serviceIndex = currentServiceIndex > 0 ? currentServiceIndex - 1: currentServiceIndex;
       const nextOffering = serviceOfferings[serviceIndex];
-      return { name: nextOffering.name, sysId: nextOffering.sys_id }
+      return { name: nextOffering.name, sysId: nextOffering.sysId || "" }
     }
 
     return undefined;
@@ -206,7 +206,7 @@ export class DescriptionOfWorkStore extends VuexModule {
     const lastOffering =  last(this.DOWObject[currentGroupIndex].serviceOfferings);
 
     return lastOffering 
-      ? { name: lastOffering.name, sysId: lastOffering.sys_id } 
+      ? { name: lastOffering.name, sysId: lastOffering.sysId || "" } 
       : undefined;
   }
 
@@ -330,7 +330,7 @@ export class DescriptionOfWorkStore extends VuexModule {
       obj => obj.serviceOfferingGroupId === this.currentGroupId
     );
     const offeringIndex = this.DOWObject[groupIndex].serviceOfferings.findIndex(
-      obj => obj.sys_id === this.currentOfferingSysId
+      obj => obj.sysId === this.currentOfferingSysId
     );
     this.DOWObject[groupIndex].serviceOfferings[offeringIndex].classificationInstances
       = instancesData;
