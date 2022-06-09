@@ -120,7 +120,8 @@ export default class ServiceOfferings extends Mixins(SaveOnLeave) {
     try {
       // save to store
       await DescriptionOfWork.setSelectedOfferings(this.selectedOptions);
-      // todo future ticket - save to SNOW
+      //save to backend
+    
     } catch (error) {
       throw new Error('error saving requirement data');
     }

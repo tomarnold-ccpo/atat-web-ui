@@ -1,11 +1,11 @@
+/* eslint-disable camelcase */
 import api from "@/api";
 import {
   ClassificationInstanceDTO, ClassificationLevelDTO,
-  RequiredServicesDTO,
   SelectedServiceOfferingDTO, ServiceOfferingDTO, SystemChoiceDTO
 } from "@/api/models";
 import { TABLENAME as ServiceOfferingTableName } from "@/api/serviceOffering";
-import _, { last, differenceWith, remove } from "lodash";
+import _, { last, difference, differenceWith } from "lodash";
 import Vue from "vue";
 import {
   Action,
@@ -26,6 +26,11 @@ import rootStore from "../index";
 
 const ATAT_DESCRIPTION_OF_WORK_KEY = "ATAT_DESCRIPTION_OF_WORK_KEY";
 
+type ServiceOfferingProxy =  {
+    serviceOffering: SelectedServiceOfferingDTO,
+    classificationInstances: ClassificationInstanceDTO[]
+}
+
 const getServiceofferingById = (sysId: string, serviceOfferings: ServiceOfferingDTO[]): 
 ServiceOfferingDTO | undefined => {
   return serviceOfferings.find(offering=> offering.sys_id === sysId);
@@ -36,6 +41,38 @@ const getClassificationLevelsById = (sysId: string,
 ClassificationLevelDTO | undefined => {
   return classificationLevels.find(classificationLevel=> classificationLevel.sys_id === sysId);  
 }
+
+
+
+const mapDOWServiceOfferingToSelectedService= 
+(dowServiceOffering: DOWServiceOffering): ServiceOfferingProxy=> {
+      
+  const serviceOffering: SelectedServiceOfferingDTO = {
+    service_offering : dowServiceOffering.sysId || "",
+    classification_instances: "",
+    other_service_offering: dowServiceOffering.otherOfferingName || "",
+  };
+
+  const classificationInstances = dowServiceOffering.classificationInstances?.map(instance=> {
+
+    const classificationInstance: ClassificationInstanceDTO = {
+
+      selected_periods: instance.selectedPeriods?.map(period=> period.sysId || "").join(',') || "",
+      classification_level: instance.classificationLevelSysId,
+      usage_description: instance.anticipatedNeedUsage,
+      need_for_entire_task_order_duration: instance.entireDuration
+    }
+    return classificationInstance;
+  }) || [];
+
+  return {
+    serviceOffering,
+    classificationInstances
+  }
+
+}
+
+
 @Module({
   name: "DescriptionOfWork",
   namespaced: true,
@@ -51,7 +88,7 @@ export class DescriptionOfWorkStore extends VuexModule {
   DOWObject: DOWServiceOfferingGroup[] = [];
 
   //list of required services -- this is synchronized to back end
-  requiredServices: SelectedServiceOfferingDTO[] = [];
+  userSelectedServiceOfferings: SelectedServiceOfferingDTO[] = [];
 
   currentGroupId = "";
   currentOfferingName = "";
@@ -257,7 +294,7 @@ export class DescriptionOfWorkStore extends VuexModule {
         const offeringGroup: DOWServiceOfferingGroup = {
           serviceOfferingGroupId: selectedOfferingGroup,
           sequence: group?.sequence || 0,
-          serviceOfferings: []
+          serviceOfferings: [],
         }
         this.DOWObject.push(offeringGroup);
       }
@@ -349,6 +386,11 @@ export class DescriptionOfWorkStore extends VuexModule {
   @Mutation
   public setCurrentOfferingGroupId(value: string): void {
     this.currentGroupId = value;
+  }
+
+  @Mutation
+  public setCurrentUserSelectedServices(value: SelectedServiceOfferingDTO[]): void{
+    this.userSelectedServiceOfferings = value;
   }
 
 
@@ -477,8 +519,16 @@ export class DescriptionOfWorkStore extends VuexModule {
     const savedSelectedServiceOffering = sysId ? 
       api.selectedServiceOfferingTable.update(sysId, data) : 
       api.selectedServiceOfferingTable.create(data);
+
+    // if(data.classification_instances){
+
+       
+    // }
+
     return savedSelectedServiceOffering;
   }
+
+
 
   @Action({rawError: true})
   public async saveClassificationInstance(data: 
@@ -507,22 +557,56 @@ export class DescriptionOfWorkStore extends VuexModule {
     
   }
 
+  public async removeClassificationInstances(classificationInstances:
+     string[]): Promise<boolean>{
 
-  public async removeRequiredServices(requiredServices: RequiredServicesDTO[]): Promise<boolean>{
+    
+    try {
+      const calls = classificationInstances
+        .map(instanceId=> api.classificationInstanceTable.remove(instanceId));
+      await Promise.all(calls);
+      return true;
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+  }
+
+  public async removeUserSelectedService(service: SelectedServiceOfferingDTO): Promise<boolean>{
+    let deletedService = true;
+    try {
+         
+      await api.selectedServiceOfferingTable.remove(service.sys_id || "");
+      
+      const classificationInstances = service.classification_instances.split(',');
+
+      if(classificationInstances.length)
+      {
+        const deletedClassificationInstances = 
+      await this.removeClassificationInstances(classificationInstances);
+        deletedService =deletedClassificationInstances;
+      }
+      return deletedService;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  public async removeUserSelectedServices(requiredServices: SelectedServiceOfferingDTO[])
+  : Promise<boolean>{
     try {
 
-      const calls = requiredServices.reduce<Promise<void>[]>((previous, current)=>  {
+      const calls = requiredServices.reduce<Promise<boolean>[]>((previous, current)=>  {
         const values = [...previous];
 
         if(current.sys_id){
-          values.push(api.requiredServicesTables.remove(current.sys_id));
+          values.push(this.removeUserSelectedService(current));
         }
         return values;
 
       }, []);
-
-      await Promise.all(calls);
-      return true;
+      const results = await Promise.all(calls);
+      return results.every(remove=>remove);
         
     } catch (error) {
       console.error(`error occurred removing required services`);
@@ -530,25 +614,79 @@ export class DescriptionOfWorkStore extends VuexModule {
     }
   }
 
-  //syncrhonizes back end with DOW
-  public async saveRequiredServices(requiredServices: RequiredServicesDTO[], 
-    offeringGroups: DOWServiceOfferingGroup[])
-  :Promise<RequiredServicesDTO>{
-    this.DOWObject[0].sequence
-    
-    //get services to delete
-    const servicesToDelete = differenceWith<RequiredServicesDTO, DOWServiceOfferingGroup>
-    // eslint-disable-next-line camelcase
-    (requiredServices, offeringGroups,({sys_id}, {requiredService})=> sys_id === requiredService);
 
-    //delete the uneeded services
-    const deleted = await this.removeRequiredServices(servicesToDelete);
+  // public async saveServiceOfferingProxyData(serviceOfferingProxy: ServiceOfferingProxy): 
+  // Promise<SelectedServiceOfferingDTO>{
 
-    if(!deleted)
-    {
-      throw new Error("error occurred removing obselete services");       
+  //    //save classification instances 
+     
+
+  // }
+
+  //synchronizes back end with DOW
+  public async saveUserSelectedServices(requiredServices: SelectedServiceOfferingDTO[], 
+    dowOfferingGroups: DOWServiceOfferingGroup[]): Promise<SelectedServiceOfferingDTO[]>{
+
+    try {
+      //grab all of the selected services in the dow object
+      const selectedServiceOfferings = dowOfferingGroups.map(group=>
+        group.serviceOfferings.flatMap(offering=>offering)).flat();
+                  
+      //find everything that isn't saved
+      const unsavedOfferings = selectedServiceOfferings
+        .filter(offering=> !offering.selectedOfferingSysId.length)
+        .map(offering=> mapDOWServiceOfferingToSelectedService(offering));
+
+      const savedOfferings =  selectedServiceOfferings
+        .filter(offering=> offering.selectedOfferingSysId.length)
+        .map(offering=>mapDOWServiceOfferingToSelectedService(offering));
+  
+      //get services to delete - delete all of the service offerings
+      //that are no longer in the dow object
+      const servicesToDelete = differenceWith<SelectedServiceOfferingDTO, ServiceOfferingProxy>
+      // eslint-disable-next-line camelcase
+      (requiredServices, savedOfferings,
+        // eslint-disable-next-line camelcase
+        ({sys_id}, {serviceOffering})=> sys_id === serviceOffering.service_offering);
+  
+      //delete the removed services
+      const deleted = await this.removeUserSelectedServices(servicesToDelete);
+  
+      if(!deleted)
+      {
+        throw new Error("error occurred removing obselete services");       
+      }
+  
+      //save selections
+      const saveCalls = servicesToDelete.map(service=> {
+
+        const serviceTable = api.selectedServiceOfferingTable;
+        return  service.sys_id ? serviceTable.update(service.sys_id, service) :
+          serviceTable.create(service);
+      });
+
+      const savedServices = await Promise.all(saveCalls);
+
+      //map saved services back to dow object
+
+      return savedServices;
+       
+    } catch (error) {
+      throw new Error(`error saving required service offerings ${error}`);
+       
     }
+  }
 
+  @Action({rawError: true})
+  public async persistDOWToServiceNow(): Promise<void>{
+
+    const savedServices = await this
+      .saveUserSelectedServices(this.userSelectedServiceOfferings, 
+        this.DOWObject);
+     
+    this.setCurrentUserSelectedServices(savedServices);
+
+    //update selected services in acquisition packages
 
 
   }
