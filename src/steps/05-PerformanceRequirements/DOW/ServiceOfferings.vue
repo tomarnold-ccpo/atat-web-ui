@@ -118,10 +118,12 @@ export default class ServiceOfferings extends Mixins(SaveOnLeave) {
 
   protected async saveOnLeave(): Promise<boolean> {
     try {
-      // save to store
-      await DescriptionOfWork.setSelectedOfferings(this.selectedOptions);
-      //save to backend
-    
+      if (this.selectedOptions.length === 0) {
+        await DescriptionOfWork.removeCurrentOfferingGroup();
+      } else {
+        // save to store
+        await DescriptionOfWork.setSelectedOfferings(this.selectedOptions);
+      }
     } catch (error) {
       throw new Error('error saving requirement data');
     }
