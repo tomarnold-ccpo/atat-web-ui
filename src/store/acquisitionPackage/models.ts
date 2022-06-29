@@ -34,4 +34,5 @@ export interface SessionData {
   sensitiveInformation: SensitiveInformationDTO;
   classificationLevel: ClassificationLevelDTO;
   requiredServices: RequiredServicesDTO;
+  fundingPlan: FundingPlanDTO;
 }

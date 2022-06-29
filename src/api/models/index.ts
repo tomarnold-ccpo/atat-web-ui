@@ -217,20 +217,24 @@ export interface FundingPlanDTO extends BaseTableDTO {
   attachment: string;
   extension: string;
   file_name: string;
+
+  remaining_amount: string;
+  initial_amount: string;
+  estimated_task_order_value: string;
+  remaining_amount_increments: string[];
 }
 
 export interface PeriodDTO extends BaseTableDTO {
-    period_unit: string;
-    period_unit_count: string;
-    period_type: string;
-    option_order: string;
+  period_unit: string;
+  period_unit_count: string;
+  period_type: string;
+  option_order: string;
 }
 
 export interface ReferenceColumn {
   link: string;
   value: string;
 }
-
 
 export interface SelectedServiceOfferingDTO extends BaseTableDTO {
   classification_instances: string;

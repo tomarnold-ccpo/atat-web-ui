@@ -115,6 +115,11 @@ export default class App extends Vue {
 
       SlideoutPanel.closeSlideoutPanel();
     }
+
+    const contentWrap = document.getElementsByClassName("v-main__wrap");
+    if (contentWrap) {
+      contentWrap[0].scrollTop = 0;
+    }
   }
 
   async navigate(direction: string): Promise<void> {
