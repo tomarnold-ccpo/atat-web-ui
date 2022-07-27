@@ -331,28 +331,21 @@ export interface EDAResponse {
 }
 
 
-export interface EnvironmentInstanceDTO {
+export interface EnvironmentInstanceDTO extends BaseTableDTO {
     storage_amount: string;
     storage_type: string;
     instance_name: string;
     classification_level: string;
     number_of_vcpus: string;
     data_egress_monthly_amount: string;
-    sys_mod_count: string;
-    sys_updated_on: string;
-    sys_tags: string;
     performance_tier: string;
     pricing_model_expiration: string;
-    sys_id: string;
     csp_region: string;
     memory_unit: string;
-    sys_updated_by: string;
     storage_unit: string;
-    sys_created_on: string;
     pricing_model: string;
     instance_location: string;
     memory_amount: string;
     operating_system_licensing: string;
     data_egress_monthly_unit: string;
-    sys_created_by: string;
 }

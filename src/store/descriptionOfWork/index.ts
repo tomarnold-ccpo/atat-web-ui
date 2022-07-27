@@ -8,7 +8,8 @@ import {
 } from "vuex-module-decorators";
 import rootStore from "../index";
 import api from "@/api";
-import { ClassificationInstanceDTO, SelectedServiceOfferingDTO, 
+import { ClassificationInstanceDTO, CurrentEnvironmentDTO, EnvironmentInstanceDTO, 
+  SelectedServiceOfferingDTO, 
   ServiceOfferingDTO, SystemChoiceDTO } from "@/api/models";
 import {TABLENAME as ServiceOfferingTableName } from "@/api/serviceOffering"
 import {
@@ -26,6 +27,10 @@ import {
 
 import _, { differenceWith, last } from "lodash";
 import ClassificationRequirements from "@/store/classificationRequirements";
+import AcquisitionPackage from "../acquisitionPackage";
+import { CurrentEnvironmentAPI } from "@/api/currentEnvironment";
+import { EnvironmentInstanceAPi } from "@/api/environmentInstance";
+import { NumberFound } from "libphonenumber-js";
 
 
 // Classification Proxy helps keep track of saved
@@ -43,6 +48,12 @@ type ServiceOfferingProxy =  {
   classificationInstances: ClassificationInstanceProxy[]
   dowServiceGroupIndex: number,
   dowServiceIndex: number
+}
+
+type ComputeDataProxy = {
+  computeData: EnvironmentInstanceDTO,
+  dowComputeDataGroupIndex: number,
+  computeDataIndex: number,
 }
 
 //helper to map DowService offering
@@ -97,6 +108,43 @@ const mapDOWServiceOfferingToServiceProxy=
 
 }
 
+const stripNumbers = (str: string) => str.replace(/[0-9]/g, '');
+
+//helper to map DowService offering
+//from DOW object to a ServiceOffering Proxy 
+// that can be saved
+const mapDOWComputeDataToComputeDataProxy= 
+(dowComputeData: ComputeData, groupIndex: number, computeDataIndex: number): ComputeDataProxy=> {
+
+  const computeData : EnvironmentInstanceDTO = {
+    classification_level: dowComputeData.classificationLevel || "",
+    csp_region : dowComputeData.deployedRegions.length > 0 ? 
+      dowComputeData.deployedRegions[0] : "", //this will need to be updated
+    data_egress_monthly_amount: "",
+    data_egress_monthly_unit: "",
+    instance_location: dowComputeData.environmentType,
+    instance_name: dowComputeData.instanceNumber.toString(),
+    memory_amount:'GB',
+    memory_unit:  dowComputeData.memory,
+    number_of_vcpus: dowComputeData.numberOfVCPUs,
+    operating_system_licensing: dowComputeData.operatingSystemAndLicensing,
+    performance_tier: dowComputeData.performanceTier,
+    pricing_model: "",
+    pricing_model_expiration: "",
+    storage_amount: dowComputeData.storageAmount,
+    storage_type: dowComputeData.storageType,
+    storage_unit: 'GB',
+
+  }
+  
+  return {
+    computeData,
+    computeDataIndex,
+    dowComputeDataGroupIndex: groupIndex,
+  }
+
+}
+
 const ATAT_DESCRIPTION_OF_WORK_KEY = "ATAT_DESCRIPTION_OF_WORK_KEY";
 
 @Module({
@@ -115,6 +163,8 @@ export class DescriptionOfWorkStore extends VuexModule {
 
     //list of required services -- this is synchronized to back end
     userSelectedServiceOfferings: SelectedServiceOfferingDTO[] = [];
+    // list of required compute data --- this is synchronized to back end
+    userSelectedComputeData : EnvironmentInstanceDTO[] = [];
 
   currentGroupId = "";
   currentOfferingName = "";
@@ -127,12 +177,17 @@ export class DescriptionOfWorkStore extends VuexModule {
   reviewGroupFromSummary = false;
   addGroupFromSummary = false;
 
+  // set (if selecting from table to edit) or increment (if adding new instance) 
+  // currentComputeInstanceNumber when working on AT-7765
+  currentComputeInstanceNumber = 0;
+
   // store session properties
   protected sessionProperties: string[] = [
     nameofProperty(this, (x) => x.serviceOfferings),
     nameofProperty(this, (x) => x.serviceOfferingGroups),
     nameofProperty(this, (x)=> x.userSelectedServiceOfferings),
-    nameofProperty(this, (x)=> x.DOWObject)
+    nameofProperty(this, (x)=> x.DOWObject),
+    nameofProperty(this, (x)=> x.currentComputeInstanceNumber),
   ];
   
   // getters
@@ -325,6 +380,19 @@ export class DescriptionOfWorkStore extends VuexModule {
   }
 
   public summaryBackToContractDetails = false;
+
+
+  @Action({rawError: true})
+  public async getCurrentEnvironment(): Promise<CurrentEnvironmentDTO>{
+    
+    try {
+      const currentEnvironment = AcquisitionPackage.currentEnvironment || 
+         await api.acquisitionPackageTable.create();
+      return currentEnvironment;
+    } catch (error) {
+      throw new Error(`error retrieving current environment ${error}`);
+    }
+  }
 
   @Mutation
   public setBackToContractDetails(bool: boolean): void {
@@ -568,14 +636,17 @@ export class DescriptionOfWorkStore extends VuexModule {
       = instancesData;
   }
 
-  // set (if selecting from table to edit) or increment (if adding new instance) 
-  // currentComputeInstanceNumber when working on AT-7765
-  currentComputeInstanceNumber = 0;
-
   @Mutation
   public setCurrentComputeInstanceNumber(number: number): void {
     this.currentComputeInstanceNumber = number;
+
+    storeDataToSession(
+      this,
+      this.sessionProperties,
+      ATAT_DESCRIPTION_OF_WORK_KEY
+    );
   }
+  
 
   @Action
   public async setComputeData(computeData: ComputeData): Promise<void> {
@@ -603,6 +674,12 @@ export class DescriptionOfWorkStore extends VuexModule {
           computeObj.computeData?.push(computeData);
         }
       }
+
+      storeDataToSession(
+        this,
+        this.sessionProperties,
+        ATAT_DESCRIPTION_OF_WORK_KEY
+      );      
 
     } else {
       throw new Error("Error saving Compute data to store");
@@ -653,6 +730,17 @@ export class DescriptionOfWorkStore extends VuexModule {
       ATAT_DESCRIPTION_OF_WORK_KEY
     );
   }
+
+  @Mutation
+  public setUserSelectedComputeData(value: EnvironmentInstanceDTO[]): void {
+    this.userSelectedComputeData = value;
+    storeDataToSession(
+      this,
+      this.sessionProperties,
+      ATAT_DESCRIPTION_OF_WORK_KEY
+    );
+  }
+
 
   @Mutation
   public updateDOWObjectWithSavedIds(values: ServiceOfferingProxy[]): void {
@@ -1022,13 +1110,158 @@ export class DescriptionOfWorkStore extends VuexModule {
 
       const servicesTosave: ServiceOfferingProxy[] = [...servicesToUpdate, ...unsavedServices];
       await this.saveUserServices(servicesTosave);
+    
      
     } catch (error) {
       console.error(error);
       throw new Error(`error persisting services ${error}`);
     }
-    
   }
+
+
+  
+  @Action({rawError: true})
+  public async saveUserComputeDataInstance(proxy: ComputeDataProxy): Promise<ComputeDataProxy>{
+
+    try {
+      
+      const apiTable = api.environmentInstanceTable;
+
+      const saveComputeData = proxy.computeData.sys_id? 
+        apiTable.update(proxy.computeData.sys_id || "", proxy.computeData)
+        : apiTable.create(proxy.computeData);
+      
+      const savedComputedData = await saveComputeData;
+      
+      proxy.computeData = savedComputedData;
+     
+      return proxy;
+
+    } catch (error) {
+      
+      throw new Error( `error occurred while saving service proxy`)
+    }
+
+  }
+
+  @Mutation
+  public updateDOWObjectWithSavedComputeIds(values: ComputeDataProxy[]): void {
+
+    values.forEach(value=> {
+      const dowGroup = this.DOWObject[value.dowComputeDataGroupIndex];
+      if(dowGroup.computeData){
+        const data = dowGroup.computeData[value.dowComputeDataGroupIndex];
+        data.sysId = value.computeData.sys_id || ""
+      }
+    })
+
+    storeDataToSession(
+      this,
+      this.sessionProperties,
+      ATAT_DESCRIPTION_OF_WORK_KEY
+    );
+  }
+
+
+
+  @Action({rawError: true})
+  public async saveUserComputedData(userComputeData: ComputeDataProxy[]): Promise<void>{
+
+    try {
+      const calls = userComputeData.map(proxy=> this.saveUserComputeDataInstance(proxy));
+      const savedProxies = await Promise.all(calls);
+      
+      //update dow object with saved ids
+      this.updateDOWObjectWithSavedComputeIds(savedProxies);
+      const savedComputedData = savedProxies.map(proxy=> proxy.computeData);
+      this.setUserSelectedComputeData(savedComputedData);
+      
+    } catch (error) {
+      console.error(error);
+      throw new Error(`error occurred saving services ${error}`);
+    }
+  }
+
+
+  @Action({rawError: true})
+  public async saveComputeData(): Promise<void> {
+    
+    try {
+
+      const userSelectedComputeData = this.userSelectedComputeData;
+      const dowOfferingGroups = this.DOWObject;
+      const computeDataProxies: ComputeDataProxy[] = [];
+
+      dowOfferingGroups.forEach((group, groupIndex)=> {
+        group.computeData?.forEach((computeData, index)=>  {
+          computeDataProxies.push(mapDOWComputeDataToComputeDataProxy(computeData, 
+            groupIndex, index));
+        })
+      });
+
+      const unsavedComputedData = computeDataProxies.filter(data=> 
+        (data.computeData.sys_id === undefined || 
+        data.computeData.sys_id.length === 0));
+
+      const savedComputedData = computeDataProxies.filter(data=>data.computeData.sys_id?.length);
+
+      const computeDataToRemove: EnvironmentInstanceDTO[] = [];
+
+      if(userSelectedComputeData.length){
+
+        // get compute data to delete
+        userSelectedComputeData.forEach(cd=> {
+          const inSaved = savedComputedData.find(saved=> 
+            saved.computeData.sys_id === cd.sys_id);
+          if(!inSaved){
+            computeDataToRemove.push(cd);
+          }
+        });
+
+        if(computeDataToRemove.length > 0){
+          await this.removeUserSelectedComputeData(computeDataToRemove);
+        }
+      }
+
+      // //get all compute data that hasn't been removed for updating
+      const computeDataToUpdate = differenceWith<ComputeDataProxy, EnvironmentInstanceDTO>(
+        savedComputedData, computeDataToRemove, ({computeData }, 
+          selected)=> computeData.sys_id === selected.sys_id);
+
+      const computeDataToSave = [...computeDataToUpdate, ...unsavedComputedData];
+
+      await this.saveUserComputedData(computeDataToSave);
+      
+
+        
+    } catch (error) {
+        
+      throw new Error(`error persisting compute data ${error}`);
+    }
+
+  }
+
+  @Action({rawError: true})
+  public async removeUserSelectedComputeData(userSelectedComputeData: EnvironmentInstanceDTO[])
+ : Promise<void>{
+    try {
+
+      const calls = userSelectedComputeData.reduce<Promise<void>[]>((previous, current)=>  {
+        const values = [...previous];
+
+        if(current.sys_id){
+          values.push(api.environmentInstanceTable.remove(current.sys_id || ""));
+        }
+        return values;
+
+      }, []);
+      await Promise.all(calls);
+       
+    } catch (error) {
+      //to nothing here we're deleting stuff optimistically
+    }
+  }
+
 }
 
 const DescriptionOfWork = getModule(DescriptionOfWorkStore);

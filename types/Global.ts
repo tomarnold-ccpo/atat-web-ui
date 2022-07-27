@@ -267,10 +267,12 @@ export interface lineChartData {
 }
 
 export interface ComputeData {
+  sysId: string;
   instanceNumber: number;
   environmentType: string;
   classificationLevel?: string; // missing from AC
   deployedRegions: string[];
+  instanceIds: Record<string, string>;  // the key is a deployed region, the value is the sys ids
   deployedRegionsOther: string;
   needOrUsageDescription: string;
   entireDuration: string;
