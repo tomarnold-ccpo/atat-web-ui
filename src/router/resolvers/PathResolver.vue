@@ -14,6 +14,9 @@ Component.registerHooks(["beforeRouteEnter"]);
 @Component({})
 export default class RouteResolver extends Vue {
   private resolveRoute(current: string): void {
+
+    debugger;
+    
     const routeResolver = this.$route.params.resolver;
     const direction = this.$route.params.direction;
 

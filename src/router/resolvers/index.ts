@@ -111,6 +111,9 @@ const getOfferingGroupServicesPath = (groupId: string)=>
 
 export const RequirementsPathResolver = (current: string, direction: string): string =>
 {
+
+  debugger;
+
   const atBeginningOfSericeOfferings = DescriptionOfWork.isAtBeginningOfServiceOfferings;
   const atBeginningOfOfferingGroups = DescriptionOfWork.isAtBeginningOfServiceGroups;
   const missingClassification = DescriptionOfWork.missingClassificationLevels;
@@ -161,6 +164,9 @@ export const RequirementsPathResolver = (current: string, direction: string): st
 export const OfferGroupOfferingsPathResolver = (
   current: string, direction: string
 ): string => {
+
+  debugger;
+
   DescriptionOfWork.setBackToContractDetails(false);
   Steps.clearAltBackButtonText();
 
@@ -314,7 +320,7 @@ export const OfferGroupOfferingsPathResolver = (
 
   if (isCompute) {
     const currentInstanceNumber = DescriptionOfWork.currentComputeInstanceNumber;
-    if (current !== routeNames.ServiceOfferingDetails) {
+    if (current !== routeNames.ComputeRequirements) {
       if (computeData && computeData.length) {
         return `${basePerformanceRequirementsPath}/service-offerings/compute/requirements`;
       }
@@ -329,8 +335,18 @@ export const OfferGroupOfferingsPathResolver = (
   return getOfferingGroupServicesPath(DescriptionOfWork.currentGroupId);
 }
 
+export const ComputeDetailsResolver = (current: string, direction: string): string => {
+  const groupId = DescriptionOfWork.currentGroupId;
+  if (groupId.toLowerCase() === "compute") {
+    return  OfferingDetailsPathResolver(current, direction);
+  }
+  return descriptionOfWorkSummaryPath;
+}
+
 //this will always return the path for the current group and the current offering
 export const OfferingDetailsPathResolver = (current: string, direction: string): string => {
+  debugger;
+
   Steps.clearAltBackButtonText();
   Steps.setAdditionalButtonHide(false);
   if (DescriptionOfWork.summaryBackToContractDetails) {
@@ -338,7 +354,8 @@ export const OfferingDetailsPathResolver = (current: string, direction: string):
     return "period-of-performance/period-of-performance";
   }
   const groupId = DescriptionOfWork.currentGroupId;
-  if (groupId.toLowerCase() === "compute") {
+  if (groupId.toLowerCase() === "compute" && current !=="Compute_Requirements") {
+    DescriptionOfWork.setCurrentOffering({name: "", sysId: ""});
     return `${basePerformanceRequirementsPath}/service-offerings/compute/requirements`
   }
 
@@ -423,6 +440,9 @@ export const OfferingDetailsPathResolver = (current: string, direction: string):
 }
 
 export const DowSummaryPathResolver = (current: string, direction: string): string =>{
+
+  debugger;
+
   DescriptionOfWork.setBackToContractDetails(current === routeNames.PropertyDetails);
   Steps.clearAltBackButtonText();
   if(current === routeNames.PropertyDetails){
@@ -584,6 +604,7 @@ const routeResolvers: Record<string, StepRouteResolver> = {
 
 // add path resolvers here 
 const pathResolvers: Record<string, StepPathResolver> = {
+  ComputeDetailsResolver,
   OfferGroupOfferingsPathResolver,
   OfferingDetailsPathResolver,
   DowSummaryPathResolver,

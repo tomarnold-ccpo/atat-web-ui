@@ -121,6 +121,9 @@ export default class AppPackageBuilder extends Vue {
   }
 
   async navigate(direction: string): Promise<void> {
+
+    debugger;
+    
     const nextStepName = direction === "next" 
       ? await Steps.getNext() 
       : await Steps.getPrevious();
