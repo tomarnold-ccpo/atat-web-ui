@@ -33,8 +33,9 @@ module.exports = (on, config) => {
   config.env.BASE_API_URL = process.env.BASE_API_URL;
   config.env.isolatedTestingURL = process.env.isolatedTestingURL;
   config.env.isTestingIsolated = process.env.isTestingIsolated;
-  config.env.isTestingInIframe = process.env.isTestingInIframe;  
-  config.env.localTestURLInIframe = process.env.localTestURLInIframe;
+  // config.env.isTestingInIframe = process.env.isTestingInIframe;  
+  // EJY look for localTestURLInIframe also
+  // config.env.localTestURLInIframe = process.env.localTestURLInIframe;
   config.env.snowUser = process.env.SNOWUSER;
   config.env.snowPass = process.env.SNOWPASS;
   config.env.disaNoIframeUrl = process.env.disaNoIframeUrl;

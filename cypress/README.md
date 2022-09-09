@@ -23,7 +23,7 @@ npm run test:e2e
 
 ### To run Cypress tests on localhost with mocked data
 Change the .env variable 'isTestingLocally' to false
-Change the .env variable 'isTestingInIframe' to false
+<!-- Change the .env variable 'isTestingInIframe' to false -->
 Change the .env variable 'isTestingIsolated' to true
 Ensure .env variable 'isolatedTestingURL' is set to "dist_testing/index.html"
 
@@ -77,9 +77,9 @@ Create a `.env` file in the project's root directory and use the following Envir
 | --------------------------- | ------------------------------------------------- |
 | 'testURL'                   | PortalUrl                                         |
 | 'localTestURL'              | http://localhost:8080                             |
-| 'localTestURLInIframe'      | http://localhost:8080/testing.html                |
+<!-- | 'localTestURLInIframe'      | http://localhost:8080/testing.html                | -->
 | 'isTestingLocally'          | false (set true to test locally)                  |
-| 'isTestingInIframe'         | true (set to false for local to see snapshots)    |
+<!-- | 'isTestingInIframe'         | true (set to false for local to see snapshots)    | -->
 | 'SNOWUSER'                  | Your username                                     |
 | 'SNOWPASS'                  | Your password                                     |
 

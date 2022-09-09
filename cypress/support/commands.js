@@ -45,45 +45,47 @@ import fd from '../selectors/financialDetails.sel'
 import performanceReqs from '../selectors/performanceReqs.sel';
 
 const isTestingLocally = Cypress.env("isTestingLocally") === "true";
-const runTestsInIframe = Cypress.env("isTestingInIframe") === "true";
+// const runTestsInIframe = Cypress.env("isTestingInIframe") === "true";
 const isTestingIsolated = Cypress.env("isTestingIsolated") === "true";
-let hopOutOfIframe = false;
+// let hopOutOfIframe = false;
 
 Cypress.Commands.add("visitURL", () => {
   if (isTestingIsolated){
     cy.visit(Cypress.env("isolatedTestingURL"));    
   } else if (isTestingLocally) {
-    if (runTestsInIframe && !hopOutOfIframe) {
-      cy.visit(Cypress.env("localTestURLInIframe"));    
-    } else {
-      cy.visit(Cypress.env("localTestURL"));    
-    }
+    // EJY
+    // if (runTestsInIframe && !hopOutOfIframe) {
+    //   cy.visit(Cypress.env("localTestURLInIframe"));    
+    // } else {
+    cy.visit(Cypress.env("localTestURL"));    
+    // }
   } else {
-    if (runTestsInIframe && !hopOutOfIframe) {
-      cy.visit(Cypress.env("testURL"));    
-    } else {
-      cy.visit(Cypress.env("disaNoIframeUrl"));    
-    }
+    // EJY
+    // if (runTestsInIframe && !hopOutOfIframe) {
+    cy.visit(Cypress.env("testURL"));    
+    // } else {
+    //   cy.visit(Cypress.env("disaNoIframeUrl"));    
+    // }
   }
 })
 
-Cypress.Commands.add("hopOutOfIframe", (hopOut, navigate) => {
-  hopOutOfIframe = hopOut || false;
-  if (navigate) {
-    cy.visitURL();
-  }
-});
+// Cypress.Commands.add("hopOutOfIframe", (hopOut, navigate) => {
+//   hopOutOfIframe = hopOut || false;
+//   if (navigate) {
+//     cy.visitURL();
+//   }
+// });
 
 Cypress.Commands.add("launchATAT", () => {
-  cy.hopOutOfIframe(false);
-  if (isTestingLocally){
+  // cy.hopOutOfIframe(false);
+  if (isTestingLocally) {
     cy.clearSession();
-    if (runTestsInIframe) {
-      cy.visit(Cypress.env("localTestURLInIframe"));    
-      cy.frameLoaded(common.app);        
-    } else {
-      cy.visit(Cypress.env("localTestURL"));    
-    }
+    // if (runTestsInIframe) {
+    //   cy.visit(Cypress.env("localTestURLInIframe"));    
+    //   cy.frameLoaded(common.app);        
+    // } else {
+    cy.visit(Cypress.env("localTestURL"));    
+    // }
   } else if (isTestingIsolated) {
     cy.clearSession();
     cy.visit(Cypress.env("isolatedTestingURL"));    
@@ -167,11 +169,11 @@ Cypress.Commands.add('login', (user, password) => {
 });
 
 Cypress.Commands.add("findElement", (selector) => {
-  if (runTestsInIframe && !hopOutOfIframe) {
-    cy.iframe(common.app).find(selector)       
-  } else {
-    cy.get(selector);
-  }
+  // if (runTestsInIframe && !hopOutOfIframe) {
+  //   cy.iframe(common.app).find(selector)       
+  // } else {
+  cy.get(selector);
+  // }
 });
 
 Cypress.Commands.add('textExists', (selector, expectedText) => {

@@ -111,7 +111,8 @@ describe("Test suite: Contract Details Step:Period of Performance substep", () =
   });
 
   it("TC5: Duplicate: Drag and Drop", () => {
-    cy.hopOutOfIframe(true, true);
+    // EJY IFRAME
+    // cy.hopOutOfIframe(true, true);
     cy.clickSideStepper(common.stepContractDetailsLink, " Contract Details ");
     cy.findElement(contractDetails.baseDropdownIcon).click();
     cy.findElement(contractDetails.baseDropdownMonth).click();
