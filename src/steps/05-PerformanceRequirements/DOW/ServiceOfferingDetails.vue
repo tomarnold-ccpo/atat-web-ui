@@ -182,13 +182,10 @@ export default class ServiceOfferingDetails extends Mixins(SaveOnLeave) {
       obj = convertColumnReferencesToValues(obj);
       const labelLong = buildClassificationLabel(obj, "long");
       const labelShort = buildClassificationLabel(obj, "short");
-      const classificationLevelSysId = typeof obj.classification_level === "object"
-        ? (obj.classification_level as ReferenceColumn).value 
-        : obj.classification_level;
       const instance: DOWClassificationInstance = {
         sysId: "", // will be populated after saving
         impactLevel: obj.impact_level,
-        classificationLevelSysId: classificationLevelSysId as string,
+        classificationLevelSysId: obj.classification_level as string,
         anticipatedNeedUsage: "",
         entireDuration: "",
         selectedPeriods: [],
@@ -402,8 +399,6 @@ export default class ServiceOfferingDetails extends Mixins(SaveOnLeave) {
 
   protected async saveOnLeave(): Promise<boolean> {
     await AcquisitionPackage.setValidateNow(true);
-    const isValid = this.$refs.form.validate();
-    
     try {
       this.instancesFormData.forEach((instance, index) => {
         if (instance.entireDuration.toLowerCase() === "yes") {
@@ -411,17 +406,8 @@ export default class ServiceOfferingDetails extends Mixins(SaveOnLeave) {
         }
       });
 
-      if (this.hasChanged() && isValid) {
-        // await DescriptionOfWork.setNeedsSecurityRequirements();
+      if (this.hasChanged()) {
         await DescriptionOfWork.setOfferingDetails(this.instancesFormData);
-      } else if (!isValid) {
-        // scroll to first errored input/issue
-        const el = document.getElementsByClassName("error--text")[0];
-        el.scrollIntoView({
-          behavior: "smooth"
-        });
-      } else {
-        await DescriptionOfWork.setNeedsSecurityRequirements();
       }
     } catch (error) {
       console.log(error);

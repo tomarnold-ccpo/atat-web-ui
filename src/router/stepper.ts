@@ -71,8 +71,6 @@ import ServiceOfferingDetails
   from "../steps/05-PerformanceRequirements/DOW/ServiceOfferingDetails.vue";
 import OtherOfferingSummary 
   from "../steps/05-PerformanceRequirements/DOW/OtherOfferingSummary.vue";
-import DOWSecurityRequirements
-  from "../steps/05-PerformanceRequirements/DOW/DOWSecurityRequirements.vue";
 import DOWSummary 
   from "../steps/05-PerformanceRequirements/DOW/Summary.vue";
 import AnticipatedUserAndDataNeeds
@@ -136,8 +134,7 @@ import {
   PIIRecordResolver,
   FOIARecordResolver,
   A11yRequirementResolver,
-  // ContractTrainingReq,
-  ServiceOfferingsPathResolver,
+  OfferGroupOfferingsPathResolver,
   OfferingDetailsPathResolver,
   DowSummaryPathResolver,
   MIPRResolver,
@@ -147,7 +144,6 @@ import {
   RequirementsPathResolver as PerformanceRequirementsPathResolver,
   FinancialPOCResolver,
   OtherOfferingSummaryPathResolver,
-  DOWSecurityRequirementsPathResolver,
   IGCESurgeCapabilities,
   IGCECannotProceedResolver,
   IGCEOptimizeOrReplicateResolver,
@@ -196,7 +192,7 @@ export const routeNames = {
   ServiceOfferings: "Service_Offerings",
   ServiceOfferingDetails: "Service_Offering_Details",
   OtherOfferingSummary: "Other_Offering_Summary",
-  DOWSecurityRequirements: "DOW_Security_Requirements",
+  // ComputeRequirements: "Compute_Requirements",
   DOWSummary: "DOW_Summary",
   OptimizeCurrentEnvironment: "Optimize_Current_Environment",
   AnythingASAServiceXaas:"Anything_as_a_Service_Xaas",
@@ -711,6 +707,9 @@ export const stepperRoutes: Array<StepperRouteConfig> = [
         routeResolver: AnticipatedUserAndDataNeedsResolver,
         component: AnticipatedUserAndDataNeeds,
       },
+
+
+
       {
         menuText: "Service Offerings",
         path: "service-offerings/:groupName",
@@ -718,7 +717,7 @@ export const stepperRoutes: Array<StepperRouteConfig> = [
         name: routeNames.ServiceOfferings,
         completePercentageWeight: 1,
         component: ServiceOfferings,
-        routeResolver: ServiceOfferingsPathResolver,
+        routeResolver: OfferGroupOfferingsPathResolver,
         additionalButtons: [
           {
             buttonText: "I don’t need these cloud resources",
@@ -755,17 +754,8 @@ export const stepperRoutes: Array<StepperRouteConfig> = [
             emitText: "confirmDeleteCompute",
           },
         ],
-      },
-      {
-        menuText: "Security Requirements",
-        path: "dow-security-requirements",
-        excludeFromMenu: true,
-        name: routeNames.DOWSecurityRequirements,
-        completePercentageWeight: 1,
-        component: DOWSecurityRequirements,
-        routeResolver: DOWSecurityRequirementsPathResolver,
-      },
 
+      },
       {
         menuText: "DOW Summary",
         path: "dow-summary",

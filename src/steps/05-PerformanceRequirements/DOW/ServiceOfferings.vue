@@ -170,7 +170,7 @@ export default class ServiceOfferings extends Mixins(SaveOnLeave) {
       this.$router.push({
         name: "pathResolver",
         params: {
-          resolver: "ServiceOfferingsPathResolver",
+          resolver: "OfferGroupOfferingsPathResolver",
           direction: "next"
         },
       }).catch(() => console.log("avoiding redundant navigation"));

@@ -6,8 +6,7 @@
     class="global-side-nav-bar d-flex flex-column align-start " 
     width="320"
   >
-    <!-- TODO: remove class .d-none on progress bar when progress bar logic complete -->
-    <div class="_stepper-progress-bar d-none">
+    <div class="_stepper-progress-bar">
       <strong class="text-primary pl-1">{{ percentComplete }}%</strong>&nbsp;
       <span class="text-base">COMPLETE</span>
       <v-progress-linear
