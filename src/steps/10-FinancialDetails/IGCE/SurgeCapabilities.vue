@@ -1,6 +1,7 @@
 <template>
   <v-container fluid class="container-max-width mb-7">
-    <v-row>
+    <v-form ref="form">
+      <v-row>
       <v-col class="col-12">
         <h1 class="page-header">
           Tell us more about your potential surge capacity
@@ -39,12 +40,13 @@
           width="150"
           :value.sync="capacity"
           :rules="[
-            $validators.isBetween(1, 50, 'Please enter a number between 1-50'),
-            $validators.required('Please enter a number between 1-50'),
+            $validators.isBetween(1, 50, 'Enter a number between 1-50'),
+            $validators.required('Enter a number between 1-50'),
           ]"
         />
       </v-col>
     </v-row>
+    </v-form>
   </v-container>
 </template>
 
@@ -56,7 +58,7 @@ import { hasChanges } from "@/helpers";
 import SaveOnLeave from "@/mixins/saveOnLeave";
 import ATATAlert from "../../../components/ATATAlert.vue";
 import ATATTextField from "../../../components/ATATTextField.vue";
-import IGCEStore, {SurgeRequirements } from "@/store/IGCE";
+import IGCEStore, { SurgeRequirements } from "@/store/IGCE";
 import {YesNo} from "../../../../types/Global";
 
 @Component({

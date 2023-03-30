@@ -1,5 +1,6 @@
 <template>
   <v-container class="container-max-width" fluid>
+    <v-form ref="form">
     <v-row>
       <v-col class="col-12">
         <h1 class="page-header mb-3">
@@ -79,6 +80,7 @@
         </div>
       </v-col>
     </v-row>
+    </v-form>
   </v-container>
 </template>
 
@@ -228,7 +230,8 @@ export default class EstimatesDeveloped extends Mixins(SaveOnLeave) {
   private async loadOnEnter(): Promise<void> {
     const store = await IGCEStore.getRequirementsCostEstimate();
     this.savedData = store.how_estimates_developed;
-    this.selectedTools = store.how_estimates_developed.tools_used.split(",");
+    this.selectedTools = store.how_estimates_developed.tools_used === ""? []:
+      store.how_estimates_developed.tools_used?.split(",");
     this.otherValueEntered = store.how_estimates_developed.other_tools_used;
     this.howEstimateMade = store.how_estimates_developed.cost_estimate_description;
     this.selectedPriceComparison =

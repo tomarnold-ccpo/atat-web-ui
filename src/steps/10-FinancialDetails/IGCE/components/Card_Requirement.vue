@@ -1,6 +1,7 @@
 <template>
   <v-container>
-    <v-row
+    <v-form lazy-validation>
+      <v-row
       style="flex-wrap: nowrap;"
       class=" _requirement-card"
       :class="[{ 'bg-error-lighter': noMonthlyValue}]"
@@ -51,6 +52,7 @@
         />
       </v-col>
     </v-row>
+    </v-form>
   </v-container>
 </template>
 
@@ -71,6 +73,7 @@ import { IgceEstimateDTO } from "@/api/models";
 })
 export default class CardRequirement extends Vue {
   @PropSync("cardData") private _cardData!: IgceEstimateDTO;
+  @PropSync("hasErrors") private _hasErrors!: boolean;
   @Prop() private index!: number;
 
   public title = ""

@@ -1,5 +1,6 @@
 <template>
   <v-container fluid class="container-max-width _anticipated-users-accordion">
+    <v-form ref="form" lazy-validation>
     <v-row>
       <v-col class="col-12">
         <h1 class="page-header">
@@ -57,6 +58,7 @@
                     :cardData="value[idx]"
                     :key="idx"
                     :index="idx + 1"
+                    :hasErrors="hasErrors"
                   />
                 </div>
               </v-expansion-panel-content>
@@ -65,6 +67,7 @@
         </div>
       </v-col>
     </v-row>
+    </v-form>
   </v-container>
 </template>
 
@@ -86,6 +89,7 @@ import SaveOnLeave from "@/mixins/saveOnLeave";
 import AcquisitionPackage from "@/store/acquisitionPackage";
 import { IgceEstimateDTO, ReferenceColumn } from "@/api/models";
 import ClassificationRequirements from "@/store/classificationRequirements";
+import Vue from "vue";
 
 
 @Component({
@@ -94,13 +98,14 @@ import ClassificationRequirements from "@/store/classificationRequirements";
   },
 })
 export default class GatherPriceEstimates extends Mixins(SaveOnLeave) {
-  
+
   igceEstimateData: IgceEstimateDTO[] = [];
   tempEstimateDataSource: IgceEstimateDTO[][] = [];
   estimateDataSource: IgceEstimateDTO[][] = [];
   classLevels = ClassificationRequirements.classificationLevels;
   isPanelOpen = [0]; //0 is open; 1 is closed.
 
+  public hasErrors = false
   public openSlideoutPanel(e: Event): void {
     if (e && e.currentTarget) {
       const opener = e.currentTarget as HTMLElement;
@@ -146,7 +151,8 @@ export default class GatherPriceEstimates extends Mixins(SaveOnLeave) {
   async sortDataSource(): Promise<void>{
     // sort nested arrays
     for (const classLevelsArray in this.tempEstimateDataSource){
-      await this.tempEstimateDataSource[classLevelsArray].sort((a,b) => (a.title>b.title) ? 1 : -1 )
+      await this.tempEstimateDataSource[classLevelsArray]
+        .sort((a,b) => (a.title>b.title) ? 1 : -1 )
     }
   }
 
