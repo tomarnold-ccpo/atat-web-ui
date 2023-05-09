@@ -39,8 +39,8 @@ describe("Testing OtherOfferingSummary Component", () => {
             entireDuration: "YES",
             environmentType: "",
             instanceNumber: 1,
-            memory: "1",
-            numberOfInstancesNeeded: "1",
+            memoryAmount: "1",
+            numberOfInstances: "1",
             numberOfVCPUs: "1",
             operatingSystemAndLicensing: "",
             performanceTier: "Other",
@@ -59,8 +59,8 @@ describe("Testing OtherOfferingSummary Component", () => {
             entireDuration: "NO",
             environmentType: "",
             instanceNumber: 2,
-            memory: "2",
-            numberOfInstancesNeeded: "2",
+            memoryAmount: "2",
+            numberOfInstances: "2",
             numberOfVCPUs: "",
             operatingSystemAndLicensing: "",
             performanceTier: "",
@@ -76,12 +76,16 @@ describe("Testing OtherOfferingSummary Component", () => {
       {
         impact_level: "level1",
         classification: "level1",
-        sys_id:"level1"
+        sys_id:"level1",
+        classification_level: {value: "v1", link: ""},
+        acquisition_package: {value: "a1", link: ""}
       },
       {
         impact_level: "level2",
         classification: "level2",
-        sys_id:"level2"
+        sys_id:"level2",
+        classification_level: {value: "v2", link: ""},
+        acquisition_package: {value: "a1", link: ""}
       }
     ])
     jest.spyOn(Periods,'getAllPeriods').mockImplementation(
@@ -122,6 +126,7 @@ describe("Testing OtherOfferingSummary Component", () => {
       expect(wrapper.vm.addInstance).toHaveBeenCalled()
     })
 
+    // Errors with: ERR_UNHANDLED_REJECTION
     it('Testing function editInstance()',async () => {
       const item = {
         duration: "Entire task order",
@@ -131,12 +136,10 @@ describe("Testing OtherOfferingSummary Component", () => {
       }
       jest.spyOn(wrapper.vm,'editInstance')
       jest.spyOn(wrapper.vm, 'navigate').mockImplementation();
-      wrapper.vm.editInstance(item)
-      Vue.nextTick(async () => {
-        const editButton = await wrapper.find('#EditButton_1')
-        editButton.trigger('click')
-        Vue.nextTick(()=>{expect(wrapper.vm.editInstance).toHaveBeenCalled()})
-      })
+      await wrapper.vm.editInstance(item)
+
+      const instanceNumber = DescriptionOfWork.currentOtherServiceInstanceNumber;
+      expect(instanceNumber).toBe(1);
     })
 
     it('Testing confirmDeleteInstance() sets showDeleteInstanceDialog to true ',async () => {

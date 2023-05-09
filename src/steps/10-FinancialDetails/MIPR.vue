@@ -1,4 +1,4 @@
-<template>
+ <template>
   <v-container class="container-max-width mb-7" fluid>
     <v-row>
       <v-col class="col-12">
@@ -7,13 +7,13 @@
           <ATATTextField
             id="MIPRNumber"
             :rules="[
-                $validators.required('Please enter the MIPR number located' +
+                $validators.required('Please enter the MIPR Number located' +
                  ' on your authorized DD Form 448.')
               ]"
             :tooltipText="toolTip"
             :value.sync="MIPRNumber"
             class="_input-max-width"
-            label="MIPR number"
+            label="MIPR Number"
           />
         </div>
         <hr/>
@@ -38,6 +38,7 @@
   </v-container>
 </template>
 <script lang="ts">
+/*eslint prefer-const: 1 */
 import Vue from "vue";
 
 import { Component, Mixins } from "vue-property-decorator";
@@ -60,7 +61,7 @@ import { AttachmentServiceCallbacks } from "@/services/attachment";
   },
 })
 export default class MIPR extends Mixins(SaveOnLeave)  {
-    private attachmentServiceName = FUNDING_REQUEST_MIPRFORM_TABLE;
+  private attachmentServiceName = FUNDING_REQUEST_MIPRFORM_TABLE;
   private uploadedFiles: uploadingFile[] = [];
   private invalidFiles: invalidFile[] = [];
   private validFileFormats = ["xlsx", "xls", "pdf"];
@@ -88,29 +89,29 @@ export default class MIPR extends Mixins(SaveOnLeave)  {
     try {
       this.saved = await FinancialDetails.loadFundingRequestMIPRForm();
       this.MIPRNumber = this.saved.mipr_number;
-      const attachments = await Attachments.getAttachments(this.attachmentServiceName);
-      const uploadedFiles = attachments.map((attachment: AttachmentDTO) => {
-        const file = new File([], attachment.file_name, {
-          lastModified: Date.parse(attachment.sys_created_on || "")
-        });
-        const upload: uploadingFile = {
-          attachmentId: attachment.sys_id || "",
-          fileName: attachment.file_name,
-          file: file,
-          created: file.lastModified,
-          progressStatus: 100,
-          link: attachment.download_link || "",
-          recordId: attachment.table_sys_id,
-          isErrored: false,
-          isUploaded: true
+      if(this.saved.mipr_attachment){
+        const attachment = await Attachments.getAttachmentById({
+          serviceKey: FUNDING_REQUEST_MIPRFORM_TABLE, sysID: this.saved.mipr_attachment});
+        if (attachment) {
+          const file = new File([], attachment.file_name, {
+            lastModified: Date.parse(attachment.sys_created_on || "")
+          });
+          const upload: uploadingFile = {
+            attachmentId: attachment.sys_id || "",
+            fileName: attachment.file_name,
+            file: file,
+            created: file.lastModified,
+            progressStatus: 100,
+            link: attachment.download_link || "",
+            recordId: attachment.table_sys_id,
+            isErrored: false,
+            isUploaded: true
+          }
+          this.uploadedFiles = [upload];
         }
-        return upload;
-      });
-
-      this.uploadedFiles = [...uploadedFiles];
-
+      }
     } catch (error) {
-      throw new Error("an error occurred loading funding plans data");
+      throw new Error("an error occurred loading MIPR data");
     }
   }
 
@@ -132,7 +133,7 @@ export default class MIPR extends Mixins(SaveOnLeave)  {
           ...this.saved || initialFundingRequestMIPRForm,
           ...this.current
         };
-        FinancialDetails.saveFundingRequestMIPRForm(updated);
+        await FinancialDetails.saveFundingRequestMIPRForm(updated);
       }
     } catch (error) {
       console.log(error);
@@ -167,13 +168,13 @@ export default class MIPR extends Mixins(SaveOnLeave)  {
       async () => {
         //reload data when files are uploaded
         this.saved = await FinancialDetails.loadFundingRequestMIPRForm();
-        this.MIPRNumber = this.saved.mipr_number;
       }
     );
   }
 
   // `ATATFileUpload.vue`
   private getRulesArray(): ((v: string) => string|true|undefined)[] {
+    //eslint-disable-next-line prefer-const
     let rulesArr: ((v: string) => string | true | undefined)[] = [];
   
     rulesArr.push(this.$validators.required(this.requiredMessage));

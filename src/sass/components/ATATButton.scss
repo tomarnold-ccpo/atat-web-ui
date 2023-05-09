@@ -18,26 +18,18 @@
   justify-content: center !important;
   align-items: center !important;
   padding: 7px 20px 8px !important;
+  font-weight: 500 !important;
+  
+  &.v-btn--icon {
+    padding: 0 !important;
+  }
   @extend %v-btn-text;
 
   // removes the default darker opacity assigned by vuetify
   &:hover::before, &:focus::before {
     opacity: 0 !important;
   }
-}
   
-.v-btn{
-  box-shadow: none !important;
-  display: flex !important;
-  flex-direction: row !important;
-  justify-content: center !important;
-  align-items: center !important;
-  padding: 7px 20px 8px !important;
-  &.v-btn--icon {
-    padding: 0 !important;
-  }
-  @extend %v-btn-text;
-
   &.primary.theme--light{
     background-color:  $primary !important;
     color: #fff !important;
@@ -55,6 +47,7 @@
     background-color: $white !important;
     border: 2px solid $primary !important;
     color: $primary;
+    font-weight: 500 !important;
 
     &:hover {
       background-color: rgba($primary, 10%) !important;
@@ -62,6 +55,11 @@
 
     &:active {
       background-color: rgba($primary, 20%) !important;
+    }
+
+    &.v-btn--disabled {
+      border-color: $disabled !important;
+      background-color: $white !important;
     }
   }
 
@@ -73,8 +71,17 @@
     font-size: 1.4rem !important;
   }
 
-  &.link-button, &.tertirary {
+  &.link-button, &.tertirary.theme--light  {
     padding: 6px 12px !important;
+  
+    &.v-btn--disabled {
+      background-color: transparent !important;
+      .v-btn__content {
+        text-decoration: none;
+        color: $disabled !important;
+      }
+
+    }
 
     &.tooltip-button {
       padding: 12px !important;
@@ -97,8 +104,16 @@
     &:focus,
     &:active {
       background-color: $primary-lighter !important;
-
     }
+
+    &.no-hover{
+      &:hover,
+      &:focus,
+      &:active {
+        background-color: transparent !important;
+      }
+    }
+   
 
     &.no-border {
       span {
@@ -110,6 +125,18 @@
       span {
         font-weight: 700 !important;
       }
+    }
+  }
+
+  &._quaternary.theme--light {
+    background-color: transparent !important;
+    .v-btn__content {
+      text-decoration: none;
+      color: $primary;
+      font-weight: normal;
+    }
+    &:hover {
+      background-color: $primary-lighter !important;
     }
   }
 
@@ -131,10 +158,13 @@
   &._icon-only {
     background-color: transparent !important;
     padding: 4px !important;
-    height: auto !important;
     min-width: unset !important;
+    height: 32px !important;
+    width: 32px !important;
     color: $base;
-
+    .v-btn__content > div {
+      display: flex;
+    }
     &:hover {
       background-color: $icon-only-hover !important;
     }
@@ -148,9 +178,80 @@
     }
 
     &._plus {
-      padding: 4px 5px 4px 3px !important; 
       height: 24px !important; 
       width: 24px !important;      
     }
+
+    &:focus-visible {
+      outline: 2px solid $primary;
+    }
+  }
+ 
+}
+
+._meatball-menu {
+  .v-list-item__title {
+    font-size: 1.4rem;
+  }
+
+  .v-list-item {
+    &:hover {
+      cursor: pointer;
+      background-color: $base-lightest;
+      &:before {
+        opacity: 0;
+        background-color: red !important;
+      }
+    }
+
+    .v-list-item__title {
+      font-size: 1.6rem;
+      display: flex;
+      align-items: center;
+    }
+    ._svg-icon {
+      margin-left: 8px;
+    }
+
+    &._separator-before, &._separator-before:hover {
+      position: relative;
+      margin-top: 24px;
+      &:after {
+        cursor: default;
+        content: "";
+        position: absolute;
+        top: -24px;
+        left: 0;
+        margin: 12px 0;
+        height: 1px;
+        min-height: 1px;
+        width: 100%;
+        background-color: $base-lighter;
+        opacity: 1;
+
+      }
+
+    }
+
   }
 }
+
+._meatball-menu-button {
+  &.v-btn.v-size--default {
+    min-width: 28px;
+    width: 28px;
+    height: 28px;
+    padding: 0 !important;
+    border-radius: 4px;
+    background-color: transparent;
+    
+    &:hover {
+      background-color: $base-lightest !important;
+    }
+
+    &[aria-expanded=true] {
+      background-color: $primary-lighter !important;
+    }
+  }
+}
+

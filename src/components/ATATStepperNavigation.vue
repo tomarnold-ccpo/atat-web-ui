@@ -1,7 +1,8 @@
 <template>
-  <nav class="stepper-nav container-max-width">
+  <nav class="stepper-nav container-max-width" :id="id">
     <hr class="base-lighter mt-10 mb-8" />
     <div class="d-flex">
+
       <v-btn
         v-if="!noPrevious"
         @click="$emit('previous')"
@@ -30,12 +31,15 @@
         </span>
 
         <v-btn 
-          @click="$emit('next')" 
+          @click="continueClicked()" 
+          v-if="!hideContinueButton"
           depressed 
-          :color="this.continueButtonText == 'Continue'? 'primary' : 'secondary'"
+          :color="continueButtonColor
+            || this.continueButtonText === 'Continue'? 'primary' : 'secondary'"
           role="link" 
           class="ml-4"
           id="ContinueButton"
+          :disabled="disableContinue"
         >
           {{ continueButtonText }}
         </v-btn>
@@ -56,9 +60,23 @@ export default class ATATStepperNavigation extends Vue {
   @Prop({ default: "Back" }) private backButtonText?: string;
   @Prop({ default: "Continue" }) private continueButtonText?: string;
   @Prop({ default: false }) private noPrevious?: boolean;
+  @Prop({ default: "stepperNavigation" }) private id?: string;
+  @Prop({ default: false }) private hideContinueButton?: boolean;
+  @Prop({ default: false }) private disableContinue!: boolean;
+  @Prop({ default: "" }) private continueButtonColor?: string;
+  @Prop({ default: "" }) private altContinueAction?: string;
 
   private getButtonClass(button: AdditionalButton) {
     return button.buttonClass || "secondary";
+  }
+
+
+  private continueClicked(): void {
+    if (!this.altContinueAction) {
+      this.$emit("next");
+    } else {
+      this.$emit("takeAltContinueAction");
+    }
   }
 
 }

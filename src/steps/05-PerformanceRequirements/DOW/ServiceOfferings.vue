@@ -5,6 +5,7 @@
         <v-col
           v-if="isServiceOfferingList"
           class="col-12"
+          @AdditionalButtonClicked="deleteServiceOfferingCategory"
         >
           <h1 
             class="page-header"
@@ -42,10 +43,9 @@
           </div>
         </v-col>
         
-        <v-col v-else-if="isCompute || isGeneral">
+        <v-col v-else-if="!isServiceOfferingList">
           <OtherOfferings 
-            :isCompute="isCompute"
-            :isGeneral="isGeneral"
+            :otherOfferingList="otherOfferingList"
             :serviceOfferingData.sync="otherOfferingData" 
             :isPeriodsDataMissing="isPeriodsDataMissing"
             :isClassificationDataMissing="isClassificationDataMissing"
@@ -54,10 +54,22 @@
 
       </v-row>
     </v-container>
+
+    <DeleteOfferingModal
+      :showDialog="showDialog"
+      :requirementName="requirementName"
+      :offeringName="deselectedLabel"
+      :deleteMode="deleteMode"
+      @deleteOfferingCancelClicked="modalCancelClicked"
+      @deleteOfferingOkClicked="deleteServiceItem"
+    >
+    </DeleteOfferingModal>
+
   </div>
 </template>
 
 <script lang="ts">
+/*eslint prefer-const: 1 */
 import SaveOnLeave from "@/mixins/saveOnLeave";
 import { Component, Mixins, Watch } from "vue-property-decorator";
 
@@ -68,11 +80,14 @@ import Periods from "@/store/periods";
 import classificationRequirements from "@/store/classificationRequirements";
 
 import DOWSubtleAlert from "./DOWSubtleAlert.vue";
+import DeleteOfferingModal from "./DeleteOfferingModal.vue";
+
+import _ from "lodash";
 
 import { 
   Checkbox, 
   OtherServiceOfferingData, 
-  DOWServiceOffering, 
+  DOWServiceOffering,
 } from "../../../../types/Global";
 import { getIdText } from "@/helpers";
 
@@ -81,6 +96,7 @@ import { getIdText } from "@/helpers";
     ATATCheckboxGroup,
     DOWSubtleAlert,
     OtherOfferings,
+    DeleteOfferingModal,
   }
 })
 
@@ -89,7 +105,7 @@ export default class ServiceOfferings extends Mixins(SaveOnLeave) {
   public requirementName = "";
 
   public requiredMessage = `Please select at least one type of offering. If you 
-    no longer need ${this.requirementName}, select the “I don’t need 
+    no longer need ${this.requirementName}, select the “I don't need 
     these cloud resources” button below.`;
 
   public otherValueRequiredMessage = "Please enter a title for this requirement."
@@ -97,9 +113,79 @@ export default class ServiceOfferings extends Mixins(SaveOnLeave) {
   public otherValueEntered = "";
   public otherSelected = "";
 
+  public showDialog = false;
+  public previousSelectedOptions: string[] = [];
+  public deselectedLabel = "";
+  public deleteMode = "item";
+
   @Watch("selectedOptions")
-  public selectedOptionsChange(newVal: string[]): void {
+  public async selectedOptionsChange(newVal: string[]): Promise<void> {
+    if(this.previousSelectedOptions.length > this.selectedOptions.length){
+      const difference = this.previousSelectedOptions.filter(
+        tempVal => this.selectedOptions.indexOf(tempVal) === -1
+      );
+      const deselectedItem = this.checkboxItems.find(el => el.value === difference[0]);
+      this.deselectedLabel = deselectedItem?.label || "";
+      this.deleteMode = "item";
+      if(this.deselectedLabel === "Other"){
+        this.otherValueEntered = ""
+      }
+      const hasInstances = 
+        await DescriptionOfWork.serviceOfferingHasInstances(this.deselectedLabel);
+      if (hasInstances) {
+        this.openModal();
+      }
+    }
+    
     this.otherSelected = newVal.indexOf(this.otherValue) > -1 ? "true" : "false";
+    this.previousSelectedOptions = this.selectedOptions.slice();
+  }
+
+  get confirmOfferingDelete(): boolean {
+    return DescriptionOfWork.confirmServiceOfferingDeleteVal;
+  }
+
+  @Watch("confirmOfferingDelete")
+  public deleteServiceOfferingCategory(newVal: boolean): void {
+    if(newVal){
+      this.deleteMode = "category";
+      this.openModal();
+    } 
+  }
+
+  public openModal(): void {
+    this.showDialog = true;
+  }
+
+  public async modalCancelClicked(): Promise<void> {
+    const deselectedItem = this.checkboxItems.find(el => el.label === this.deselectedLabel);
+    if(deselectedItem)
+      this.selectedOptions.push(deselectedItem?.value);
+    this.showDialog = false;
+    await DescriptionOfWork.setConfirmServiceOfferingDelete(false);
+  }
+
+  public async deleteServiceItem(): Promise<void> {
+    if(this.deleteMode === "category"){
+      await DescriptionOfWork.removeCurrentOfferingGroup();
+      DescriptionOfWork.setConfirmServiceOfferingDelete(false);
+      this.showDialog = false;
+      this.deleteMode = "item";
+      this.deselectedLabel = "";
+      this.$router.push({
+        name: "pathResolver",
+        params: {
+          resolver: "ServiceOfferingsPathResolver",
+          direction: "next"
+        },
+      }).catch(() => console.log("avoiding redundant navigation"));
+    } else {
+      await DescriptionOfWork.removeServiceOffering(this.deselectedLabel);
+      this.showDialog = false;
+      this.deleteMode = "item";
+      this.deselectedLabel = "";
+    }
+       
   }
 
   public selectedOptions: string[] = [];
@@ -107,29 +193,22 @@ export default class ServiceOfferings extends Mixins(SaveOnLeave) {
   public serviceOfferings: DOWServiceOffering[] = [];
   public serviceGroupOnLoad = "";
 
-  public isCompute = false;
-  public isGeneral = false;
+  public otherOfferingList = [
+    "compute",
+    "database",
+    "storage",
+    "general_xaas",
+    "advisory_assistance",
+    "help_desk_services",
+    "training",
+    "documentation_support",
+    "general_cloud_support",
+    "portability_plan"
+  ];
+
   public isServiceOfferingList = true;
 
-  public otherOfferingData: OtherServiceOfferingData = {
-    instanceNumber: 1,
-    environmentType: "",
-    classificationLevel: "",
-    deployedRegions: [],
-    deployedRegionsOther: "",
-    descriptionOfNeed: "",
-    entireDuration: "",
-    periodsNeeded: [],
-    operatingSystemAndLicensing: "",
-    numberOfVCPUs: "",
-    memory: "",
-    storageType: "",
-    storageAmount: "",
-    performanceTier: "",
-    performanceTierOther: "",
-    numberOfInstancesNeeded: "1",
-    requirementTitle: "",
-  }
+  public otherOfferingData = _.cloneDeep(DescriptionOfWork.emptyOtherOfferingInstance);
 
   public showSubtleAlert = false;
   public isPeriodsDataMissing = false;
@@ -137,14 +216,13 @@ export default class ServiceOfferings extends Mixins(SaveOnLeave) {
 
   public async loadOnEnter(): Promise<void> {
     this.serviceGroupOnLoad = DescriptionOfWork.currentGroupId;
-    // only Compute and General XaaS categories differ in requirements
-    this.isCompute = this.serviceGroupOnLoad.toLowerCase() === "compute";
-    this.isGeneral = this.serviceGroupOnLoad.toLowerCase() === "general_xaas";
     // all other categories have a similar workflow with checkbox list of service offerings
-    this.isServiceOfferingList = !this.isCompute && !this.isGeneral;
+    this.isServiceOfferingList = !this.otherOfferingList.includes(
+      this.serviceGroupOnLoad.toLowerCase()
+    );
+    this.requirementName = await DescriptionOfWork.getOfferingGroupName();
 
     if (this.isServiceOfferingList) {
-      this.requirementName = await DescriptionOfWork.getOfferingGroupName();
       this.serviceOfferings = await DescriptionOfWork.getServiceOfferings();
       if (this.serviceOfferings.length) {
         this.serviceOfferings.forEach((offering) => {
@@ -154,17 +232,15 @@ export default class ServiceOfferings extends Mixins(SaveOnLeave) {
             value: offering.sys_id,
             description: offering.description,
           }
-          this.checkboxItems.push(checkboxItem);
-          if (checkboxItem.value === "Other") {
+          if (checkboxItem.label === "Other") {
             this.otherValueEntered = offering.otherOfferingName || "";
           }
+          this.checkboxItems.push(checkboxItem);
         });
       }
 
-      this.requirementName = await DescriptionOfWork.getOfferingGroupName();
-
       const selectedOfferings = DescriptionOfWork.selectedServiceOfferings;
-      
+
       const validSelections = selectedOfferings.reduce<string[]>((accumulator, current)=>{  
         const itemIndex = this.checkboxItems.findIndex(item=>item.label === current);
         const selected = itemIndex >=0 ? [...accumulator, 
@@ -174,8 +250,7 @@ export default class ServiceOfferings extends Mixins(SaveOnLeave) {
 
       this.selectedOptions.push(...validSelections);
 
-      this.otherValueEntered = DescriptionOfWork.otherServiceOfferingEntry;
-    } else if (this.isCompute || this.isGeneral) {
+    } else {
       const offeringIndex = DescriptionOfWork.DOWObject.findIndex(
         obj => obj.serviceOfferingGroupId.toLowerCase() 
           === DescriptionOfWork.currentGroupId.toLowerCase()
@@ -202,12 +277,19 @@ export default class ServiceOfferings extends Mixins(SaveOnLeave) {
         }
       }
     }
+    //find sys_id for otherValue
+    //eslint-disable-next-line prefer-const
+    let otherCheckBoxIndex = this.checkboxItems.findIndex((item) =>item.label === "Other")
+    this.otherValue = this.checkboxItems[otherCheckBoxIndex]?.value || ""
 
     const periods = await Periods.loadPeriods();
     const classifications = await classificationRequirements.getSelectedClassificationLevels();
     this.isPeriodsDataMissing = periods.length === 0 ? true : false;
     this.isClassificationDataMissing = classifications.length === 0 ? true : false;
     this.showSubtleAlert = this.isPeriodsDataMissing || this.isClassificationDataMissing;
+
+    this.previousSelectedOptions = this.selectedOptions.slice();
+    await DescriptionOfWork.setConfirmServiceOfferingDelete(false);
   } 
 
   public async mounted(): Promise<void> {
@@ -216,6 +298,7 @@ export default class ServiceOfferings extends Mixins(SaveOnLeave) {
 
   protected async saveOnLeave(): Promise<boolean> {
     try {
+
       if (this.serviceGroupOnLoad) {
         // save to store if user hasn't clicked "I don't need these cloud resources" button
         if (this.serviceGroupOnLoad === DescriptionOfWork.currentGroupId) {
@@ -223,16 +306,13 @@ export default class ServiceOfferings extends Mixins(SaveOnLeave) {
             await DescriptionOfWork.setSelectedOfferings(
               { selectedOfferingSysIds: this.selectedOptions, otherValue: this.otherValueEntered }
             );
-          } else if (this.isCompute || this.isGeneral) {
+          } else {
+            // this will be restored and made more bulletproof as it does kill the app
+            // if (this.otherOfferingData.sysId !== ""){
+            //   await this.prepareCurrentOfferingToSave();
+            // }
             await DescriptionOfWork.setOtherOfferingData(this.otherOfferingData);
           }
-        }
-
-        //save to backend
-        if (this.isServiceOfferingList) {
-          await DescriptionOfWork.saveUserSelectedServices();
-        } else if (this.isCompute) {
-          // save computeData to backend in ticket AT-7767
         }
       }
     } catch (error) {
@@ -240,6 +320,40 @@ export default class ServiceOfferings extends Mixins(SaveOnLeave) {
     }
 
     return true;
+  }
+
+  /**
+   * The function prepares the current offering to save ONLY if the user deleted the classification
+   * level of the offering.
+   * 
+   * if the user removes the classification level on the instance currently being viewed,
+   * the instance is deleted from the store and the database, but the form fields remain filled in
+   * and the user remains on the page.
+   * 
+   * By removing the sys_id of this.otherOfferingData obj, the instance will successfully save to 
+   * the database and store and a new instance will be created. 
+   */
+  public async prepareCurrentOfferingToSave(): Promise<void> {
+    const existingOtherOfferings: OtherServiceOfferingData[] = [];
+    DescriptionOfWork.DOWObject.forEach(
+      (dow) => {
+        if(dow.otherOfferingData !== undefined) {
+          dow.otherOfferingData.forEach(
+            ood => existingOtherOfferings.push(ood)
+          )
+        }
+      }
+    ) 
+
+    const displayedOtherOfferingHasNoClassLevel = existingOtherOfferings.some(
+      others => others.sysId !== this.otherOfferingData.sysId
+    ) 
+
+    if (displayedOtherOfferingHasNoClassLevel){
+      this.otherOfferingData.sysId = "";
+    }
+    
+    
   }
 
 }

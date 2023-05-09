@@ -17,16 +17,22 @@ export class SlideoutPanelStore extends VuexModule {
   slideoutPanelOpenerId = ""; 
   slideoutPanelTitle = "";
   slideoutPanelComponent: Component = {};
+  slideoutPanelHasComponent = false;
+
+  public get getSlideoutPanelIsOpen(): boolean {
+    return this.slideoutPanelIsOpen;
+  }
 
   @Action
-  async setSlideoutPanelComponent(panelContent: SlideoutPanelContent): Promise<void> {
+  public async setSlideoutPanelComponent(panelContent: SlideoutPanelContent): Promise<void> {
     this.doSetSlideoutPanelComponent(panelContent);
   }
 
   @Mutation
   public doSetSlideoutPanelComponent(panelContent: SlideoutPanelContent): void {
     this.slideoutPanelComponent = panelContent.component;
-    this.slideoutPanelTitle = panelContent.title;
+    this.slideoutPanelTitle = panelContent.title || "";
+    this.slideoutPanelHasComponent = true;
     const wrapper = document.getElementById("PanelWrap");
     if (wrapper) {
       wrapper.scrollTop = 0;
@@ -50,7 +56,9 @@ export class SlideoutPanelStore extends VuexModule {
   @Mutation
   public doOpenSlideoutPanel(openerId: string): void {
     this.slideoutPanelIsOpen = true;
-    this.slideoutPanelOpenerId = openerId;
+    if (openerId) {
+      this.slideoutPanelOpenerId = openerId;
+    }
   }
 
 }

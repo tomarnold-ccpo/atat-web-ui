@@ -11,8 +11,8 @@ describe("Test suite:SAC Step: FOIA sub step", () => {
     cy.fixture("orgAddressType").then((types) => {
       orgAddressType = types;
     });
-    cy.launchATAT();
-        
+    cy.launchATAT(true);
+    cy.homePageClickAcquisitionPackBtn();    
   });    
     
   it("TC1: SAC: PDoI is active on Vertical stepper", () => {

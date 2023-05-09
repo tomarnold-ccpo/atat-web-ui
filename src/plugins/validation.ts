@@ -50,6 +50,22 @@ export class ValidationPlugin {
  * @returns {function(*=): boolean}
  */
 
+  allowedLengths(
+    lengths: number[], 
+    message?: string
+  ): ((v: string) => string | true | undefined) {
+
+    let lengthsStr: string = lengths.length > 1 
+      ? lengths.join(", ")
+      : lengths[0].toString();
+    lengthsStr = lengthsStr.replace(/,(?=[^,]+$)/, ' or');
+
+    message = message || `Must be ${lengthsStr} characters.`;
+    return (v: string) => {
+      return v && !lengths.includes(v.length) ? message : true;
+    };
+  };
+
   required(
     message?: string, isCurrency?: string
   ): ((v: string) => string | true | undefined) {
@@ -63,7 +79,7 @@ export class ValidationPlugin {
         // array of strings
         return v && Object.values(v).length > 0 || message;
       } else if (typeof (v) === "string") {
-        return (v !== "") || message;
+        return (v.trim() !== "") || message;
       } else if ( typeof (v) === "undefined"){ //validates file upload
         return message;
       } else if (isCurrency) {
@@ -74,6 +90,15 @@ export class ValidationPlugin {
       }
     };
   };
+
+  notSameAsDefault(
+    message?: string, defaultValue?: string
+  ): ((v: string) => string | true | undefined) {
+    message = message || "Text cannot be the same as the default text";
+    return (v: string) => {
+      return v && v.trim() !== defaultValue?.trim() || message;
+    }
+  }
 
   /**
  * Validator ensures that field only contains integers
@@ -159,21 +184,50 @@ export class ValidationPlugin {
     message = message || `Invalid Date`;
     // validate date isn't something like 12/DD/YYYY
     return (v: string) => {
-      return (/^[0-9]*$/.test(v.replaceAll(/\//g, ""))) || message
+      return (/^[0-9]*$/.test(v.replaceAll(/\//g, ""))) || message;
     };
+  };
+
+  /**
+ * Validator that validates if url is valid
+ * Returns the error message otherwise.
+ *
+ * @param {string} message
+ * @returns {function(*): (boolean|string)}
+ */
+  isURL(
+    message?: string
+  ):((v: string) => string | true | undefined){
+    message = message || "Invalid URL";
+    return (v: string) => {
+      if (v !== "") {
+        // eslint-disable-next-line max-len
+        const httpRegex = /^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w.-]+)+[\w\-._~:/?#[\]@!$&'()*+,;=.]+$/gm;
+        return v.match(httpRegex) ? true : message;
+      }
+      return true;
+    }
   };
 
   /**
   * @returns {function(*): (boolean|string)}
   */
-  isEmail = (): ((v: string) => string | true | undefined) => {
+  isEmail = (
+    message?: string,
+    isScrt?: boolean
+  ): ((v: string) => string | true | undefined) => {
+    isScrt = isScrt === undefined ? false : isScrt;
     return (v: string) => {
       if (v && v !== "") {
-        if (/[a-z0-9]+@[a-z-]+\.[a-z]{3}/i.test(v) === false) {
+        if (/[a-z0-9]+@[a-z-_.0-9]+\.[a-z]{3}/i.test(v) === false) {
           return "Please use standard domain format, like ‘@mail.mil’"
-        } else if (/^\S[a-z-_.0-9]+@[a-z-]+\.(?:gov|mil)$/i.test(v) === false) {
-          return "Please use your .mil or .gov email address."
-        }
+        } else if (!isScrt && /^\S[a-z-_.0-9]+@[a-z-_.0-9]+\.(?:gov|mil)$/i.test(v) === false) {
+          return message || "Please use your .mil or .gov email address."
+        } else if (isScrt && 
+          /^\S[a-z-_.0-9]+@[a-z-_.0-9]+\.(?:sgov|smil)+\.(?:gov|mil)$/i.test(v) === false
+        ) {
+          return message || "Please use your .smil or .sgov email address."
+        }      
       }
       return true;
     };
@@ -230,12 +284,19 @@ export class ValidationPlugin {
   };
 
   /**
- * Validator that ensures the file is valid.
- * Returns the error message otherwise.
- *
- * @param message
- * @returns {function(*): boolean}
- */
+   * Validator that ensures the file is valid.
+   * Returns the error message otherwise.
+   *
+   * @returns {function(*): boolean}
+   * @param file
+   * @param validExtensions
+   * @param maxFileSize
+   * @param doesFileExist
+   * @param SNOWError
+   * @param statusCode
+   * @param restrictedNames
+   * @param maxFileNumber
+   */
 
   isFileValid = (
     file: File, 
@@ -244,27 +305,33 @@ export class ValidationPlugin {
     doesFileExist: boolean,
     SNOWError?: string,
     statusCode?: number,
+    restrictedNames?:string[],
   ):((v: string) => string | true | undefined) => {
     return () => {
-      const fileName = file.name.length>20 
-        ? file.name.substring(0, 12) + '...' 
+      const fileName = file.name.length>20
+        ? file.name.substring(0, 12) + '...'
             + file.name.substring(file.name.length-8, file.name.length)
         : file.name;
       const fileSize = file.size;
       const isValidExtension = validExtensions.some((ext)=>
         fileName.substring(fileName.lastIndexOf(".")+1).toLowerCase() === ext
       )
+
       if (!isValidExtension){
         return `'${fileName}' is not a valid format or has been corrupted. ` +
                 `Please upload a valid .${validExtensions.slice(0, -1).join(", .")} or ` +
                 `.${validExtensions.slice(-1)} file.`
+      }
+      // list of names that a file can not have
+      if(restrictedNames?.includes(file.name)){
+        return "'" + file.name + "' already exists. Please rename the file<br />and upload again."
       }
 
       // does file aleady exist?
       if (doesFileExist){
         return `'${fileName}' was already uploaded.`
       }
-      
+
       // is file too big?
       if (fileSize>maxFileSize){
         return `Your file '${fileName}' is too large. Please upload a file that is 1GB or less.`
@@ -274,21 +341,21 @@ export class ValidationPlugin {
         const error = SNOWError.toLowerCase();
         let invalidMessage = "";
 
-        // during upload, did SNOW detect that the 
+        // during upload, did SNOW detect that the
         // file type was incorrect (eg, changing .txt to .pdf file)
         if (error.indexOf("invalid file type")>-1){
           invalidMessage = `'${fileName}' is not a valid format or has been corrupted. ` +
             `Please upload a valid .${validExtensions.slice(0, -1).join(", .")} or ` +
             `.${validExtensions.slice(-1)} file.`
-        } else { 
-          // generic message to accommodate for all other errors 
+        } else {
+          // generic message to accommodate for all other errors
           //that are returned from SNOW
           invalidMessage = "We have encountered unexpected problems uploading your file '" +
             fileName +"'. Please try again later."
         }
         return invalidMessage;
       }
-      return true;
+      return true
     }
   };
 }

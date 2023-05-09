@@ -7,7 +7,7 @@
         </h1>
         <div class="copy-max-width">
           <p class="mb-10">
-            If you select Yes below, then we will verify a few details and sync 
+            If you select "Yes" below, then we will verify a few details and sync 
             your funding request with this effort. Otherwise, you can manually 
             upload forms from your computer. 
             <a
@@ -39,16 +39,18 @@
               label="Order Number"
               tooltipText="This is a 20-character value (including hyphens) generated 
                 by G-Invoicing. You may also enter 22 characters (including a period 
-                and digit at the end) to reference the version number."
+                and digit at the end) to reference the version number. Your Order Number
+                is located in the top section of <strong>your FS Form 7600A</strong>"
               :hideHelpTextOnError="true"
               :validate-on-blur="true"
               :value.sync="gInvoiceNumber"
               helpText="Format: OYYMM-000-000-000000"
+              searchType="G-Invoicing"
 
               :rules="[
                 $validators.isMaskValid(
                   ['O[0-9]{4}\-[0-9]{3}-[0-9]{3}-[0-9]{6}(\.[0-9])?$'],
-                  `Your order number should be 20 or 22 characters (including hyphens 
+                  `Your order number should be 20 or 22 characters (including hyphens
                     and periods) and use the format:<ul>
                     <li>OYYMM-000-000-000000</li>
                     <li>OYYMM-000-000-000000.0 (with version number)</li></ul>`,
@@ -56,7 +58,6 @@
                 )
               ]"
             />
-
         </div>
       </v-col>
     </v-row>

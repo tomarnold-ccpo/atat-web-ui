@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="_panel-padding">
     <h2 class="mb-5">What is G-Invoicing?</h2>
     <p>
       Government Invoicing (G-Invoicing) is a Fiscal Service application used by Federal Program
@@ -25,8 +25,8 @@
     <p>
       The financial management system aligns processes between trading partners through each step of
       the Buy/Sell lifecycle and uses a common set of terms. This will replace the various manual
-      forms used today like the Fiscal Service Form 7600A/B, Military Interdepartmental Purchase
-      Request (MIPR), etc.
+      forms used today like the Fiscal Services (FS) Form 7600A/B, Military Interdepartmental 
+      Purchase Request (MIPR), etc.
     </p>
     <p>
       For more information, visit:
@@ -78,6 +78,6 @@ import { Component } from "vue-property-decorator";
 export default class GInvoiceLearnMore extends Vue {
   private fiscalServiceHref = "https://www.fiscal.treasury.gov/g-invoice/index.html";
   private gInvoiceLoginHref =
-   " https://www.igt.fiscal.treasury.gov";
+    "https://www.igt.fiscal.treasury.gov";
 }
 </script>

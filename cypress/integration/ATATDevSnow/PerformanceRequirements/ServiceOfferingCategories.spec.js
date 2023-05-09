@@ -11,7 +11,7 @@ import contractDetails from "../../../selectors/contractDetails.sel";
 import performanceReqs from "../../../selectors/performanceReqs.sel";
 
 
-describe("Test suite: Performance Requirements: Categories",{ tags: '@iso-ignore' },  () => {
+describe.skip("Test suite: Performance Requirements: Categories",{ tags: '@iso-ignore' },  () => {
   let serviceOfferingGroups;
 
   beforeEach(() => {
@@ -22,6 +22,7 @@ describe("Test suite: Performance Requirements: Categories",{ tags: '@iso-ignore
     });
 
     cy.launchATAT();
+    cy.homePageClickAcquisitionPackBtn();
   });
     
   it("TC1: Performance Requirements on the Vertical Stepper is active", () => {

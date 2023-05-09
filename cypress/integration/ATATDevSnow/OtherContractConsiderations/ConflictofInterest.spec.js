@@ -7,8 +7,8 @@ describe("Test suite: OCC: Conflict of Interest substep", () => {
   beforeEach(() => {
 
     bootstrapMockApis();
-    cy.launchATAT();
-
+    cy.launchATAT(true);
+    cy.homePageClickAcquisitionPackBtn();
   });
     
   it("TC1: COI on the Vertical Stepper is active", () => {
@@ -47,7 +47,7 @@ describe("Test suite: OCC: Conflict of Interest substep", () => {
     cy.radioBtn(occ.coiYesRadioOption, "YES").not("[disabled]");
     cy.radioBtn(occ.coiNoRadioOption, "NO").not("[disabled]").click({ force: true })
       .then(() => {
-        cy.findElement(occ.explanationLabelText).not("to.be.visible");
+        cy.findElement(occ.explanationLabelText).should("not.exist");
       });
     
   });

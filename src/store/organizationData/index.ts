@@ -3,8 +3,9 @@ import {Action, getModule, Module, Mutation, VuexModule, } from "vuex-module-dec
 import rootStore from "../index";
 
 import api from "@/api";
+import { AxiosRequestConfig } from "axios"
 import {TABLENAME as OrganizationTable} from "@/api/organization";
-import { SystemChoiceDTO } from "@/api/models";
+import { AgencyDTO, SystemChoiceDTO } from "@/api/models";
 import  {nameofProperty, storeDataToSession, retrieveSession} from "../helpers"
 import Vue from "vue";
 
@@ -25,55 +26,56 @@ export class OrganizationDataStore extends VuexModule {
   //has the store been initialized
   initialized = false;
   //keeps track of project title for global display
-  public service_agency_data: SystemChoiceDTO[] = [];
+  public agency_data: AgencyDTO[] = [];
   public disa_org_data: SystemChoiceDTO[] = [];
 
-    // store session properties
-    protected sessionProperties: string[] = [
-      nameofProperty(this,x=> x.service_agency_data),
-      nameofProperty(this, x=> x.disa_org_data),
-    ];
-  
+  public get agencyData(): AgencyDTO[] {
+    return this.agency_data;
+  }
 
-
-  @Mutation
-    public setInitialized(value: boolean): void {
-      this.initialized = value;
-    }
+  // store session properties
+  protected sessionProperties: string[] = [
+    nameofProperty(this,x=> x.agency_data),
+    nameofProperty(this, x=> x.disa_org_data),
+  ];
 
   @Mutation
-  public setServiceAgencyData(value: SystemChoiceDTO[]): void {
+  public setInitialized(value: boolean): void {
+    this.initialized = value;
+  }
 
-    this.service_agency_data = value;
-
+  @Mutation
+  public setAgencyData(value: AgencyDTO[]): void {
+    this.agency_data = value;
   }
 
   @Action({rawError: true})
-  private async getServiceAgencyData():Promise<void>
+  public async getAgencyData():Promise<void>
   {
-    const service_agency_data = await api.systemChoices.getChoices(
-      OrganizationTable,
-      "service_agency"
-    );
-    this.setServiceAgencyData(service_agency_data);
+    const agencyRequestConfig: AxiosRequestConfig = {
+      params: {
+        sysparm_query: "ORDERBYlabel",
+        sysparm_fields: "label,title,acronym,css_id,sys_id",
+      },
+    };
+    const agency_data = await api.agencyTable.all(agencyRequestConfig)
+    this.setAgencyData(agency_data);
   }
 
   @Mutation
   public setDisOrgData(value: SystemChoiceDTO[]): void {
-
     this.disa_org_data = value;
-
   }
 
   @Action({rawError: true})
-  private async getDisaOrgData():Promise<void>
-  {
+  private async getDisaOrgData():Promise<void> {
     const disa_org_data = await api.systemChoices.getChoices(
       OrganizationTable,
       "disa_organization"
     );
     this.setDisOrgData(disa_org_data);
   }
+
   @Mutation
   public setStoreData(sessionData: string):void{
     try {
@@ -85,34 +87,39 @@ export class OrganizationDataStore extends VuexModule {
     } catch (error) {
       throw new Error('error restoring session for organization data store');
     }
-    
-
   }
+
   @Action({ rawError: true })
   public async initialize(): Promise<void> {
     try {
-
-      const sessionRestored= retrieveSession(ATAT_ORGANIZATION_DATA_KEY);
-
-      if(sessionRestored){
+      const sessionRestored = retrieveSession(ATAT_ORGANIZATION_DATA_KEY);
+      if (sessionRestored) {
         this.setStoreData(sessionRestored);
-      }
-      else{
-
-        await this.getServiceAgencyData();
+      } else {
+        await this.getAgencyData();
         await this.getDisaOrgData();
         this.setInitialized(true);
         storeDataToSession(this, this.sessionProperties, ATAT_ORGANIZATION_DATA_KEY);
-      }
-
-    
-        
+      }       
     } catch (error) {
       console.log(`error occurred loading organization data ${error}`)
     }
   }
 
+  @Action({rawError: true})
+  public async reset(): Promise<void> {
+    sessionStorage.removeItem(ATAT_ORGANIZATION_DATA_KEY);
+    this.doReset();
+  }
+
+  @Mutation
+  private doReset(): void {
+    this.initialized = false;
+    this.agency_data = [];
+    this.disa_org_data = [];
+  }
+
 }
 
-const OrganiationData = getModule(OrganizationDataStore);
-export default OrganiationData;
+const OrganizationData = getModule(OrganizationDataStore);
+export default OrganizationData;

@@ -1,5 +1,9 @@
 .v-select-list {
+  hr {
+     margin: 8px 0;
+  }
   .v-list-item {
+
     min-height: unset;
     &._item-disabled {
       @extend .text-disabled;
@@ -40,6 +44,7 @@
 }
 
 .v-select {
+
   &.v-text-field--outlined fieldset {
     border-color: $base !important;
   }
@@ -77,6 +82,10 @@
     font-size: 14px;
     font-weight: 500;
     padding-left: 16px;
+  }
+  
+  .v-select__slot {
+    height: 38px;
   }
 
   &._small {
@@ -132,10 +141,30 @@
     }
   }
 
+  &._alt-style-clean {
+
+    fieldset {
+      border: none;
+      background-color: transparent;
+    }
+
+    &:hover {
+      fieldset {
+        background-color: $primary-20;
+      }
+    }
+  }
+
   &._invite-members-modal {
     .v-menu__content {
       min-width: 180px !important;
       left: -75px !important;
+    }
+  }
+  &._search-bar-sort {
+    .v-menu__content {
+      min-width: 220px !important;
+      left: -50px !important;
     }
   }
 }

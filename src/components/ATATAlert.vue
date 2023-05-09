@@ -5,7 +5,7 @@
     class="_atat-alert"
     :class="getClasses"
     :id="id"
-    :style="{ 'max-width': maxWidth + 'px' }"
+    :style="[{ 'max-width': maxWidth + 'px' }, { 'min-width' : minWidth + 'px' }]"
   >
     <div
       class="_content d-flex"
@@ -26,7 +26,7 @@
           {{ getIcon() }}
         </i>
       </div>
-      <div>
+      <div class="width-100">
         <slot name="content"></slot>
         <div
           v-if="maxHeight"
@@ -76,6 +76,7 @@
 <script lang="ts">
 import Vue from "vue";
 import { Component, Prop } from "vue-property-decorator";
+import AcquisitionPackage from "@/store/acquisitionPackage";
 
 @Component({})
 export default class ATATAlert extends Vue {
@@ -84,14 +85,20 @@ export default class ATATAlert extends Vue {
   @Prop({default: "Alert"}) private id?: string;
   @Prop({default: ""}) private maxHeight?: string;
   @Prop({default: ""}) private maxWidth?: string;
+  @Prop({default: ""}) private minWidth?: string;
 
   /**
    * type: 1) info, 2) error, 3) warning, 4) success, 5) callout
    * NOTE:
-   * type "callout" will never have an icon or border, always light blue background - general info
+   * type "callout" will never have an icon or border - general info
    * all other types are alerts and will always have an icon and border
    */
   @Prop({default: "error"}) private type?: string;
+
+  /**
+   * default is info-lighter
+   */
+  @Prop({default: "info-lighter"}) private calloutBackground?: string;
 
   /**
    * size: 1) large or 2)small
@@ -103,12 +110,14 @@ export default class ATATAlert extends Vue {
   @Prop({default: false}) private closeButton?: boolean;
 
   public get getClasses(): string {
+    let alertClasses = ""
     if (this.type === "callout") {
-      return this.maxHeight ? "_callout _scrollable py-0 pr-0 " : "_callout";
+      alertClasses = this.maxHeight ? "_callout _scrollable py-0 pr-0" : "_callout";
+      return alertClasses + " bg-" + this.calloutBackground;
     }
-    let alertClasses = "_" + this.type + "-alert";
-    alertClasses = this.borderLeft ? alertClasses + " _border-left-thick " : alertClasses;
-    alertClasses = this.maxHeight ? alertClasses + " py-0 pr-0 " : alertClasses;
+    alertClasses = "_" + this.type + "-alert";
+    alertClasses = this.borderLeft ? alertClasses + " _border-left-thick" : alertClasses;
+    alertClasses = this.maxHeight ? alertClasses + " py-0 pr-0" : alertClasses;
     return alertClasses;
   }
 
@@ -121,6 +130,9 @@ export default class ATATAlert extends Vue {
   }
 
   private close(): void {
+    if(this.id == "TaskOrderDetailsAlert"){
+      AcquisitionPackage.setTaskOrderDetailsAlertClosed(true)
+    }
     this.show = false;
   }
 }

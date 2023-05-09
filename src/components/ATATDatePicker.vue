@@ -84,12 +84,13 @@
   </div>
 </template>
 <script lang="ts">
-import { Component, Prop, Watch } from "vue-property-decorator";
+import { Component, Prop, PropSync, Watch } from "vue-property-decorator";
 import Vue from "vue";
 import Inputmask from "inputmask";
 import { add, format, isValid } from "date-fns";
 import ATATTooltip from "@/components/ATATTooltip.vue";
 import ATATErrorValidation from "@/components/ATATErrorValidation.vue";
+import AcquisitionPackage from "@/store/acquisitionPackage";
 
 @Component({
   components: {
@@ -100,7 +101,11 @@ import ATATErrorValidation from "@/components/ATATErrorValidation.vue";
 export default class ATATDatePicker extends Vue {
   // refs
   $refs!: {
-    atatDatePicker: Vue & { errorBucket: string[]; errorCount: number };
+    atatDatePicker: Vue & { 
+      errorBucket: string[]; 
+      errorCount: number; 
+      validate: () => boolean;
+    };
     atatDatePickerMenu: Vue & {
       save: (selectedDate: string) => Record<string, never>;
     };
@@ -281,6 +286,16 @@ export default class ATATDatePicker extends Vue {
     this.menu = !this.menu;
   }
 
+  public get validateFormNow(): boolean {
+    return AcquisitionPackage.getValidateNow;
+  }
+
+  @Watch('validateFormNow')
+  public validateNowChange(): void {
+    if(!this.$refs.atatDatePicker.validate())
+      this.setErrorMessage();
+  }
+
   /**
    * returns menutop based on if label
    */
@@ -296,11 +311,19 @@ export default class ATATDatePicker extends Vue {
    * LIFECYCLE HOOKS
    */
   private mounted(): void {
-    this.date = this.value;
+    if (this.value && this.value.indexOf("-") > -1) {
+      this.date = this.value;
+    } else if (this.value && this.value.indexOf("/") > -1) {
+      this.date = this.reformatDate(this.value);
+    }
+
+    this.formatDateWatcher();
+
     this.$nextTick(() => {
       this.addMasks();
     });
     this.removeErrors();
   }
+
 }
 </script>

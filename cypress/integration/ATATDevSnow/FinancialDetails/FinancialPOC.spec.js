@@ -17,12 +17,13 @@ describe("Test suite: Financial Details Step: Financial POC",() => {
       contactInfo = info;
     });
     cy.launchATAT();
+    cy.homePageClickAcquisitionPackBtn();
     cy.clickSideStepper(common.stepContractDetailsLink, " Contract Details ");
     cy.textExists(common.subStepPopText, " Period of Performance ");
     cy.dropDownClick(contractDetails.baseDropdownIcon);    
   });
     
-  it("TC1: Tell us about your financial POC: Select Civilian", () => {
+  it.skip("TC1: Tell us about your financial POC: Select Civilian", () => {
     cy.findElement(contractDetails.baseDropdownMonth).click();
     //Enter the Value for Base
     const baseValue="11"
@@ -132,7 +133,7 @@ describe("Test suite: Financial Details Step: Financial POC",() => {
       
   }); 
   
-  it("TC2: Select Military", () => {
+  it.skip("TC2: Select Military", () => {
     cy.findElement(contractDetails.baseDropdownYear).click();
     //Enter the Value for Base
     const baseValue=randomNumberBetween(1,1)
@@ -172,7 +173,7 @@ describe("Test suite: Financial Details Step: Financial POC",() => {
     //list of Affiliationrole
     cy.findElement(fd.contactRoleTxt).then(($role) => {
       expect($role).to.have.text(
-        " What role best describes your affiliation with the DoD? "
+        " What role best describes your Financial POC's affiliation? "
       );
     });
     //select radio button

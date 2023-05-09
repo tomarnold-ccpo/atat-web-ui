@@ -197,13 +197,13 @@
                       Base period length: {{ periodLengthStr }}
                     </span>
                     <p class="mb-0">
-                      Your funding plan may not exceed this PoP.
+                      Your funding plan may not exceed this period.
                     </p>
-                    <hr class="base my-4" />
+                    <!-- <hr class="base my-4" /> -->
                   </div>
                 </div>
 
-                <div class="d-flex">
+                <!-- <div class="d-flex">
                   <div class="pr-5">
                     <ATATSVGIcon
                       name="monetizationOn"
@@ -217,7 +217,7 @@
                       Total cost estimate: ${{ costEstimateStr }}
                     </span>
                     <p class="mb-0" v-if="!isFundingMet">
-                      <!-- adjust message for overfunded or funding met -->
+                      
                       You need to add
                       <span id="AmountRemaining" class="bold">
                         ${{ amountRemainingStr }}
@@ -229,7 +229,7 @@
                       your base period.
                     </p>
                   </div>
-                </div>
+                </div> -->
               </div>
             </div>
           </div>
@@ -253,6 +253,7 @@
 </template>
 
 <script lang="ts">
+/*eslint prefer-const: 1 */
 import { Component, Mixins } from "vue-property-decorator";
 
 import ATATSelect from "@/components/ATATSelect.vue";
@@ -305,8 +306,8 @@ export default class IncrementalFunding extends Mixins(SaveOnLeave) {
 
   public ordinals = ["1st", "2nd", "3rd", "4th"];
 
-  public costEstimate = 0;
-  public costEstimateStr = "";
+  public costEstimate = 250000;
+  public costEstimateStr = toCurrencyString(this.costEstimate);
   public amountRemaining = 0;
   public amountRemainingStr = "";
   public initialAmount = 0;
@@ -362,16 +363,16 @@ export default class IncrementalFunding extends Mixins(SaveOnLeave) {
   public async validateOnContinue(): Promise<void> {
     this.calcAmounts("initialIncrement");
     this.calcAmounts("increment0");
-    this.isUnderfunded(); 
-    this.isOverfunded();
+    // this.isUnderfunded(); 
+    // this.isOverfunded();
 
-    if (!this.hasValidatedOnContinue && (this.outOfRangeIndex && this.outOfRangeIndex >= 0
-      || this.isIFPUnderfunded || this.isIFPOverfunded)
-    ) {
-      this.allowContinue = false;
-    } else {
-      this.allowContinue = true;
-    }
+    // if (!this.hasValidatedOnContinue && (this.outOfRangeIndex && this.outOfRangeIndex >= 0
+    //   || this.isIFPUnderfunded || this.isIFPOverfunded)
+    // ) {
+    //   this.allowContinue = false;
+    // } else {
+    //   this.allowContinue = true;
+    // }
   }
 
   public quarterChange(args: Record<string, SelectData>): void {
@@ -498,6 +499,7 @@ export default class IncrementalFunding extends Mixins(SaveOnLeave) {
   public addIncrement(): void {
     const lastFundingIncrement = this.fundingIncrements.at(-1);
     const lastSelectedQtr = lastFundingIncrement?.text;
+    //eslint-disable-next-line prefer-const
     let selectedQtrIndex = this.fiscalQuarters.findIndex(
       (p) => p.text === lastSelectedQtr
     );
@@ -566,6 +568,7 @@ export default class IncrementalFunding extends Mixins(SaveOnLeave) {
   public isFundingMet = false;
 
   public calcAmounts(field: string): void {
+    //eslint-disable-next-line prefer-const
     let incrementsTotal = this.fundingIncrements.reduce(
       (accumulator, current) =>
         accumulator + Number(currencyStringToNumber(current.amt)),
@@ -575,7 +578,7 @@ export default class IncrementalFunding extends Mixins(SaveOnLeave) {
     this.totalAmount = this.initialAmount
       ? this.initialAmount + incrementsTotal
       : incrementsTotal;
-    this.isFundingMet = this.totalAmount >= this.costEstimate;
+    // this.isFundingMet = this.totalAmount >= this.costEstimate;
 
     this.amountRemaining = this.costEstimate - this.totalAmount;
     this.amountRemainingStr = this.amountRemaining
@@ -602,7 +605,7 @@ export default class IncrementalFunding extends Mixins(SaveOnLeave) {
       amt = parseFloat(this.fundingIncrements[0].amt);
       this.errorMissingFirstIncrement = amt === 0 || isNaN(amt);
     }
-    this.isOverfunded();
+    // this.isOverfunded();
   }
 
   public checkIfHasPeriodGap(index: number): boolean {
@@ -701,8 +704,6 @@ export default class IncrementalFunding extends Mixins(SaveOnLeave) {
       this.initialAmountStr = storeData.initialFundingIncrementStr;
       this.initialAmount = currencyStringToNumber(this.initialAmountStr);
 
-      this.calcAmounts("");
-
       // use below for future validation ticket
       this.hasReturnedToPage = this.fundingIncrements.length > 0;
 
@@ -722,6 +723,8 @@ export default class IncrementalFunding extends Mixins(SaveOnLeave) {
         });
       }
     }
+
+    this.calcAmounts("");
     
     this.periodOfPerformance = await PeriodOfPerformance.loadPeriodOfPerformance();
     const requestedPopStartDate = this.periodOfPerformance.requested_pop_start_date;
@@ -776,6 +779,7 @@ export default class IncrementalFunding extends Mixins(SaveOnLeave) {
 
       if (this.allowContinue) {
         // Set chronological order of fiscal quarters in fundingIncrements
+        //eslint-disable-next-line prefer-const
         let sortedIncrements: fundingIncrement[] = [];
         this.fundingIncrements.forEach((incr) => {
           incr.order =

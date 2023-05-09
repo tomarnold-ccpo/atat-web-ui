@@ -9,6 +9,8 @@ import {
 import { Component } from "vue";
 import rootStore from "./index";
 
+import SlideoutPanel from "@/store/slideoutPanel"; 
+
 @Module({
   name: "AppSectionsStore",
   namespaced: true,
@@ -19,22 +21,40 @@ import rootStore from "./index";
 export class AppSectionsStore extends VuexModule {
 
   sectionTitles: Record<string, string> = {
+    Home: "Home",
     AcquisitionPackage: "Acquisition Package Builder",
     JWCCDashboard: "JWCC Dashboard",
-    PortfolioDashboard: "Portfolio Dashboard",
     TOLookup: "Lookup TO in EDA",
-    PortfolioSummary: "Portfolio Summary"
+    Portfolios: "Portfolios",
+    PortfolioSummary: "Portfolio Summary",
+    DocumentReview: "Document Review",
+    Packages: "Packages",
+    ProvisionWorkflow: "ProvisionWorkflow"
   }
 
-  activeAppSection = this.sectionTitles.AcquisitionPackage;
+  activeAppSection = this.sectionTitles.Home;
 
   appSectionMenuItems: { title: string }[] = [
     { title: this.sectionTitles.AcquisitionPackage },
     { title: this.sectionTitles.JWCCDashboard },
-    { title: this.sectionTitles.PortfolioDashboard },
     { title: this.sectionTitles.TOLookup },
-    { title: this.sectionTitles.PortfolioSummary },
+    { title: this.sectionTitles.Portfolios },
+    { title: this.sectionTitles.DocumentReview },
+    { title: this.sectionTitles.Packages },
+    { title: this.sectionTitles.ProvisionWorkflow }
   ];
+
+  activeTabIndex = 0;
+
+  @Action
+  public async setActiveTabIndex(idx: number): Promise<void> {
+    this.doSetActiveTabIndex(idx);
+  }
+  
+  @Mutation
+  public async doSetActiveTabIndex(idx: number): Promise<void> {
+    this.activeTabIndex = idx;
+  }
 
   @Mutation
   public changeActiveSection(section: string): void {
@@ -63,6 +83,7 @@ export class AppSectionsStore extends VuexModule {
   @Mutation
   doSetAppContentComponent(contentComponent: Component): void {
     this.appContentComponent = contentComponent;
+    SlideoutPanel.closeSlideoutPanel();
   }
 
 }

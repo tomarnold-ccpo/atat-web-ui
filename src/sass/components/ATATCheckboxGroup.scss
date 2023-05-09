@@ -7,10 +7,23 @@
 
 ._checkbox-group-label {
   font-weight: 500;
+  margin-bottom: 1.6rem !important;
+  font-size: 1.6rem !important;
+}
+
+._checkboxes {
+  &._inline {
+    display: flex;
+    .v-input--checkbox {
+      margin-right: 12px !important;
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+    }
+  }
 }
 
 ._checkbox {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 
   ._description {
     font-size: 1.4rem;
@@ -43,10 +56,22 @@
     margin-top: 0;
     padding-top: 0;
   }
+  &._big-bold-label {
+    label {
+      color: $base-darkest !important;
+      font-size: 20px !important;
+      font-weight: 500 !important;
+      &.error--text {
+        color: $error-dark !important;
+      }
+    }
+    .v-input__slot {
+      align-items: center;
+    }
+  }
 
   label {
     color: $base-darkest !important;
-
     &.error--text {
       color: $error-dark !important;
     }
@@ -88,6 +113,29 @@
     transition: none;
   }
 
+  &._has-text-fields {
+    min-height: 42px;
+    .v-input__control, .v-input__slot {
+      min-height: 42px;
+    }
+    margin-bottom: 4px;
+    .v-input__slot {
+      align-items: center !important;
+    }
+    > .v-input__control {
+      max-width: 180px;
+    }
+    .v-input__prepend-outer {
+      width: 100%;
+      flex-grow: 1;
+    }
+    .atat-text-field {
+      .atat-text-field-error {
+        margin-bottom: 12px;
+      }
+    }
+  }
+
   &._has-other {
     &._other-selected {
       .v-input__slot {
@@ -122,6 +170,14 @@
 
 }
 
+._cds-checkbox-list {
+  ._has-text-fields {
+    > .v-input__control {
+      max-width: 240px !important;
+    }
+  }
+}
+
 ._checkbox-card {
   @extend ._checkbox;
   background-color: $base-lightest !important;
@@ -153,9 +209,16 @@
   }
   &.error--text {
     background-color: $base-lightest !important;
-    border: solid 2px $error;
+    border: solid 1px $error;
+    outline: solid 1px $error;
     border-radius: 4px !important;
     padding: 12px 0px 0px 12px;
+    &:hover {
+      outline: solid 1px $primary;
+    }
+    &._no-description {
+      padding-bottom: 12px;
+    }
     label {
       color: $error-dark !important;
     }
@@ -171,12 +234,17 @@
     font-weight:700 !important;
     font-size:1.6rem;
     margin-bottom:4px !important;
+    &._no-description {
+      font-weight: 400 !important;
+      margin-bottom: 0 !important;
+    }
   }
   label {
     color: $base-darkest !important;
     padding-top: 2px;
   }
 }
+
 ._checkbox-focus {
   background: $primary-lighter !important;
   transform: scale(1) !important;
@@ -264,4 +332,9 @@
           }
       }
   }
+}
+
+._checkbox-text-field-wrap {
+  height: 42px;
+  margin: 2px 0 4px;
 }

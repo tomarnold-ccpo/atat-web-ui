@@ -76,7 +76,7 @@ export class ContactDataStore extends VuexModule {
       return  {
 
         text: country.name,
-        value: country.iso3166_2,
+        value: country.sys_id,
       }
     })
   }
@@ -250,7 +250,7 @@ export class ContactDataStore extends VuexModule {
   }
 
   @Action({rawError: true})
-  public GetMilitaryRank(rankComponentId: string):MilitaryRankDTO | undefined {
+  public async GetMilitaryRank(rankComponentId: string): Promise<MilitaryRankDTO | undefined> {
     return this.militaryRanks.find(rank=> rank.sys_id === rankComponentId);
   }
 
@@ -285,6 +285,25 @@ export class ContactDataStore extends VuexModule {
       });
       return filteredCountries;
     }
+  }
+
+  @Action({rawError: true})
+  public async reset(): Promise<void> {
+    sessionStorage.removeItem(ATAT_CONTACT_DATA_KEY);
+    this.doReset();
+  }
+
+  @Mutation
+  private doReset(): void {
+    this.initialized = false;
+    this.branchChoices = [];
+    this.civilianGradeChoices  = [];
+    this.countries = [];
+    this.militaryRanks = [];
+    this.militaryAutoCompleteGroups = {};
+    this.roleChoices = [];
+    this.salutationChoices = [];
+    this.states = [];
   }
 }
 

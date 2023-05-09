@@ -9,9 +9,10 @@
       name="AddressType"
       class="mt-3 mb-8"
       @radioButtonSelected="addressTypeChange"
+      :rules="[$validators.required('Please select your Organization\'s address type.')]"
     />
 
-    <v-form v-show="_selectedAddressType !== ''" ref="atatAddressForm" lazy-validation>
+    <div v-if="_selectedAddressType !== ''" ref="atatAddressForm" lazy-validation>
       <v-row>
       <v-col class="col-12 col-lg-8">
         <ATATTextField
@@ -44,7 +45,7 @@
         ]"
       >
         <ATATTextField
-          v-show="_selectedAddressType !== addressTypes.MIL"
+          v-if="_selectedAddressType !== addressTypes.MIL"
           id="City"
           label="City"
           :class="inputClass"
@@ -52,7 +53,7 @@
           :rules="getRules('City')"
         />
         <ATATSelect
-          v-show="_selectedAddressType === addressTypes.MIL"
+          v-if="_selectedAddressType === addressTypes.MIL"
           id="APO_FPO_DPO"
           label="APO/FPO/DPO"
           :class="inputClass"
@@ -74,7 +75,7 @@
         <ATATAutoComplete
           id="State"
           label="State"
-          v-show="_selectedAddressType === addressTypes.USA"
+          v-if="_selectedAddressType === addressTypes.USA"
           :class="inputClass"
           titleKey="text"
           :searchFields="['text', 'value']"
@@ -86,7 +87,7 @@
         />
 
         <ATATSelect
-          v-show="_selectedAddressType === addressTypes.MIL"
+          v-if="_selectedAddressType === addressTypes.MIL"
           id="StateCode"
           label="AA/AE/AP"
           :class="inputClass"
@@ -98,7 +99,7 @@
         />
 
         <ATATTextField
-          v-show="_selectedAddressType === addressTypes.FOR"
+          v-if="_selectedAddressType === addressTypes.FOR"
           id="StateProvince"
           label="State or Province"
           :value.sync="_stateOrProvince"
@@ -119,7 +120,7 @@
         />
       </v-col>
     </v-row>
-    <v-row v-show="_selectedAddressType === addressTypes.FOR">
+    <v-row v-if="_selectedAddressType === addressTypes.FOR">
       <v-col class="col-12 col-lg-4">
         <ATATAutoComplete
           id="Country"
@@ -136,11 +137,12 @@
         />
       </v-col>
     </v-row> 
-    </v-form>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
+/*eslint prefer-const: 1 */
 import Vue from "vue";
 import { Component, Prop, PropSync } from "vue-property-decorator";
 
@@ -152,7 +154,14 @@ import ATATTextField from "./ATATTextField.vue";
 import Inputmask from "inputmask/";
 
 
-import { isValidObj, mask, RadioButton, SelectData, stringObj } from "types/Global";
+import {
+  AutoCompleteItem,
+  isValidObj,
+  mask,
+  RadioButton,
+  SelectData,
+  stringObj
+} from "types/Global";
 
 @Component({
   components: {
@@ -165,7 +174,7 @@ import { isValidObj, mask, RadioButton, SelectData, stringObj } from "types/Glob
 })
 
 export default class ATATAddressForm extends Vue {
-   $refs!: {
+  $refs!: {
     atatAddressForm: Vue & {
       resetValidation: () => void;
       reset: () => void;
@@ -181,7 +190,7 @@ export default class ATATAddressForm extends Vue {
   @PropSync("selectedStateCode") public _selectedStateCode?: string;
   @PropSync("stateOrProvince") public _stateOrProvince?: string;
   @PropSync("zipCode") public _zipCode?: string;
-  @PropSync("selectedCountry") public _selectedCountry?: SelectData;
+  @PropSync("selectedCountry") public _selectedCountry?: AutoCompleteItem;
 
   @Prop({required: true}) public addressTypeOptions?: RadioButton[];
   @Prop({required: true}) public addressTypes?: stringObj;
@@ -192,7 +201,7 @@ export default class ATATAddressForm extends Vue {
   @Prop() public requiredFields?: stringObj[];
   @Prop() public isValidRules?: isValidObj[];
 
-  
+  public maskObj: mask = {};
 
 
   // methods
@@ -203,10 +212,11 @@ export default class ATATAddressForm extends Vue {
           ? { text: "", value: "" }
           : { text: "United States of America", value: "US" };
 
-    this.resetData();
+    // this.resetData();
   }
 
   private getRules(inputID: string): ((v:string)=> string | true | undefined)[] {
+    //eslint-disable-next-line prefer-const 
     let rulesArr: ((v:string)=>string | true | undefined)[]  = [];
     if (this.requiredFields) {
 
@@ -239,16 +249,16 @@ export default class ATATAddressForm extends Vue {
         inputID + "_text_field"
       ) as HTMLInputElement;
       if(inputField !== null) {
-        const maskObj: mask ={
+        this.maskObj ={
           placeholder: "",
           jitMasking: true
         }
         if (rule.isMaskRegex && rule.isMaskRegex===true){
-          maskObj.regex =  rule.mask[0] || "";
+          this.maskObj.regex =  rule.mask[0] || "";
         } else {
-          maskObj.mask = rule.mask || [];
+          this.maskObj.mask = rule.mask || [];
         }
-        Inputmask(maskObj).mask(inputField);
+        Inputmask(this.maskObj).mask(inputField);
       }
     })
   }

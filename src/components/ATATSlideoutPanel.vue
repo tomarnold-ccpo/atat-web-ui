@@ -8,17 +8,18 @@
     :width="panelWidth + 'px'"
     app
     right
-    :clipped="appSection === 'Portfolio Summary'"
+    :clipped="appSection === 'Portfolio Summary' || appSection === 'Portfolios'"
     :temporary="showOverlay"
+    disable-resize-watcher
   >
     <div
-      v-if="appSection !== 'Portfolio Summary'"
+      v-if="panelTitle"
       class="_panel-header">
       <div class="_panel-title" id="PanelTitle" tabindex="-1">
         {{ panelTitle }}
       </div>
       <v-btn
-        class="text--base-darkest pa-0 icon-24"
+        class="text-base-darkest pa-0 icon-24 _panel-closer"
         text
         small
         @click.stop="closeSlideoutPanel"
@@ -31,8 +32,8 @@
       </v-btn>
     </div>
 
-    <div id="PanelWrap" class="_panel-content-wrap" v-if="panelTitle">
-      <slot></slot>
+    <div id="PanelWrap" class="_panel-content-wrap">
+      <slot v-if="currentPanelDefined"></slot>
     </div>
 
   </v-navigation-drawer>
@@ -48,6 +49,9 @@ import SlideoutPanel from "@/store/slideoutPanel/index";
 
 export default class ATATSlideoutPanel extends Vue {
   @Prop({ default: "380" }) private panelWidth!: string;
+  @Prop({ default: false }) private alwaysOpen!: boolean;
+
+  
   public appSection = AppSections.activeAppSection;
   public transitionEnded(e: Event):void {
     const target = e.currentTarget as HTMLElement;
@@ -61,9 +65,13 @@ export default class ATATSlideoutPanel extends Vue {
     return SlideoutPanel.slideoutPanelTitle;
   }
 
+  get currentPanelDefined(): boolean {
+    return SlideoutPanel.slideoutPanelHasComponent;
+  }
+
   private isOpen = false;
   set isSlideoutPanelOpen(isOpen: boolean) {
-    this.isOpen = isOpen;
+    this.isOpen = this.alwaysOpen ? this.alwaysOpen : isOpen;
   }
   /*
    * adds click event listener to overlay if Displayed
@@ -102,7 +110,9 @@ export default class ATATSlideoutPanel extends Vue {
   slideoutPanelToggle(isOpen: boolean): void {
     this.$nextTick(() => {
       if (isOpen) {
-        document.getElementById("PanelTitle")?.focus();
+        setTimeout(()=> {
+          document.getElementById("PanelTitle")?.focus();
+        }, 100)
         const wrapper = document.getElementById("PanelWrap");
         if (wrapper) {
           wrapper.scrollTop = 0;

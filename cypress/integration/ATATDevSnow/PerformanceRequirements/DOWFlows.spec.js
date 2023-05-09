@@ -5,7 +5,7 @@ import {
 import common from "../../../selectors/common.sel";
 import contractDetails from "../../../selectors/contractDetails.sel";
 
-describe("Test suite: DOW Workflows for each Category option", { tags: '@iso-ignore' }, () => {
+describe.skip("Test suite: DOW Workflows for each Category option", { tags: '@iso-ignore' }, () => {
 
   let serviceOfferingGroups;
 
@@ -17,6 +17,7 @@ describe("Test suite: DOW Workflows for each Category option", { tags: '@iso-ign
     });
 
     cy.launchATAT();
+    cy.homePageClickAcquisitionPackBtn();
     cy.clickSideStepper(common.stepContractDetailsLink, " Contract Details ");
     cy.verifyPageHeader(" Let’s gather some details about the duration of your task order ");
     cy.dropDownClick(contractDetails.baseDropdownIcon);

@@ -1,6 +1,5 @@
 <template>
-  <div 
-    :id="id+'_radio_group_control'" >
+  <div :id="id+'_radio_group_control'">
     <v-radio-group
       class="_atat-radio-group"
       ref="radioButtonGroup"
@@ -9,15 +8,27 @@
       v-model="_selectedValue"
     >
       <fieldset>
-        <div class="d-flex mb-3">
+        <div class="d-flex" :class="{ 'mb-3' : !helpText }">
           <legend
             v-if="legend"
             class="form-field-label pb-0 mr-2"
             :class="{ 'd-sr-only': legendSrOnly }"
           >
             {{ legend }}
+            <span v-if="legendLink">
+              <a 
+                role="button"
+                tabindex="0"
+                class="ml-1 font-weight-400"
+                :id="legendLink.id"
+                @click="legendLinkClicked"
+                @keydown.enter="legendLinkClicked"
+                @keydown.space="legendLinkClicked"
+              >
+                {{ legendLink.linkText }}
+              </a>
+            </span>
           </legend>
-
           <ATATTooltip 
             v-if="tooltipText"
             :tooltipText="tooltipText"
@@ -26,6 +37,9 @@
             :label="getTooltipLabel()"
           />
         </div>
+        <div v-if="helpText" class="font-size-14 text-base mb-3">
+          {{ helpText }}
+        </div>
 
         <v-radio
           v-for="item in items"
@@ -33,13 +47,15 @@
           :class="[
             radioClasses,
             { '_has-other': item.value === otherValue },
-            { '_other-selected': showOtherEntry(item.value) }
+            { '_other-selected': showOtherEntry(item.value) },
+            { '_readonly' : item.readonly}
           ]"
           :key="item.id"
           :value="item.value"
           :style="{ width: width + 'px' }"
           :name="name"
           :disabled="item.disabled || disabled"
+          :readonly="item.readonly"
           @blur="onBlur"
           @click="onClick"
         >
@@ -53,7 +69,12 @@
                 v-html="item.label"
               ></div>
 
-              <div v-if="item.description" class="mb-0" v-html="item.description"></div>
+              <div 
+                v-if="item.description" 
+                class="mb-0" 
+                :class="{'_description-small' : !card }"
+                v-html="item.description"
+              ></div>
               
               <ATATTextArea
                 v-if="otherEntryType === 'textarea'"
@@ -80,7 +101,7 @@
             </div>
           </template>
           <template v-else v-slot:label>
-            <span v-html="item.label"></span>
+              <span v-html="item.label"></span>
           </template>
 
         </v-radio>
@@ -98,8 +119,9 @@ import ATATTextArea from "@/components/ATATTextArea.vue";
 import ATATTextField from "@/components/ATATTextField.vue";
 import ATATTooltip from "@/components/ATATTooltip.vue"
 
-import { RadioButton } from "../../types/Global";
+import { LegendLink, RadioButton } from "../../types/Global";
 import { getIdText } from "@/helpers";
+import AcquisitionPackage from "@/store/acquisitionPackage";
 
 @Component({
   components: {
@@ -118,6 +140,7 @@ export default class ATATRadioGroup extends Vue {
       errorBucket: string[]; 
       errorCount: number;
       validate: () => boolean;
+      resetValidation: () => boolean;
     };
     atatTextInput: Vue & { 
       errorBucket: string[]; 
@@ -130,6 +153,7 @@ export default class ATATRadioGroup extends Vue {
   @PropSync("value") private _selectedValue!: string;
   @Prop({ default: "" }) private id!: string;
   @Prop({ default: "" }) private legend!: string;
+  @Prop({ default: "" }) private helpText?: string;
   @Prop({ default: [""] }) private items!: RadioButton[];
   @Prop({ default: () => []}) private rules!: Array<unknown>;
   @Prop({ default: false }) private card!: boolean;
@@ -149,6 +173,8 @@ export default class ATATRadioGroup extends Vue {
   @Prop({ default: false }) private validateOtherNow?: boolean;
   @Prop({ default: false}) private clearOtherValidation?: boolean;
   @PropSync("validateOtherOnBlur") private _validateOtherOnBlur?: boolean;
+  @Prop() public legendLink?: LegendLink;
+  @PropSync("clearErrorMessages") public _clearErrorMessages?: boolean;
 
   // data
   private errorMessages: string[] = [];
@@ -165,13 +191,31 @@ export default class ATATRadioGroup extends Vue {
       : [];
   }
 
+  public get validateFormNow(): boolean {
+    return AcquisitionPackage.getValidateNow;
+  }
+
+  @Watch('validateFormNow')
+  public validateNowChange(): void {
+    if(!this.$refs.radioButtonGroup.validate())
+      this.setErrorMessage();
+  }
+
   // methods
   private setErrorMessage(): void {
     this.errorMessages = this.$refs.radioButtonGroup.errorBucket;
   } 
   private clearErrorMessage(): void {
     this.errorMessages = [];
+    this._clearErrorMessages = false;
+    this.$refs.radioButtonGroup.resetValidation();
   } 
+  @Watch("clearErrorMessages")
+  public clearErrorMessagesChanged(newVal: boolean): void {
+    if (newVal) {
+      this.clearErrorMessage();
+    }
+  }
 
   private getIdText(string: string) {
     return getIdText(string);
@@ -184,6 +228,7 @@ export default class ATATRadioGroup extends Vue {
   private showOtherEntry(value: string): boolean {
     return this.hasOtherValue 
       && value === this.otherValue
+      && this._selectedValue !== undefined
       && this._selectedValue.indexOf(this.otherValue) > -1
       && !this.hideOtherInput;
   }
@@ -200,6 +245,7 @@ export default class ATATRadioGroup extends Vue {
 
   // events
   private onClick(): void {
+    this.$emit("radioButtonClicked", this._selectedValue);
     this.clearErrorMessage();
   }
 
@@ -241,9 +287,15 @@ export default class ATATRadioGroup extends Vue {
   }
 
   @Watch("clearOtherValidation")
-  public resetOtherValiation(): void {
+  public resetOtherValidation(): void {
     this.$refs.atatTextInput.errorBucket = [];
     this.$refs.atatTextInput.errorCount = 0;
+  }
+
+  public legendLinkClicked(e: Event): void {
+    if (this.legendLink) {
+      this.$emit(this.legendLink.emitText, e)
+    }
   }
 
 }

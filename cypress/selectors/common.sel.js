@@ -4,18 +4,29 @@ module.exports = {
   packageNameHeader: "header.v-toolbar div.h3",
   wrap:".v-main__wrap",
   header: "h1.page-header",
+  sideNavBar:"#GlobalSideNavBar",
   sideBarList: ".global-side-nav-bar .v-list",
   stepperProgressBarTextPrimary: "._stepper-progress-bar .text-primary",
   stepperProgressBarText: "._stepper-progress-bar .text-base",
   progressBar: ".v-progress-linear__determinate",
-  completePercentage:".global-side-nav-bar .completed-check[data-substep-complete-percentage]",
-  rightMenuTab: "header ul.navbar-nav",
-  portal: "#Portals",
-  userAvatar: ".sub-avatar",
+  completePercentage:".global-side-nav-bar .completed-check[data-substep-complete-percentage]",  
   footerLinks:".atat-page-footer .links",
   continueBtn:"#ContinueButton",
   backBtn: "#BackButton span span",
-  introText:"p.mb-10",
+  introText: "p.mb-10",
+  
+  //common id for modal button
+  commonOkBtn: "#dialog_ok",
+  dialogModal: ".v-dialog",
+  
+  //toast 
+  toastText:".v-snack__content",
+  
+  //slidepanel
+  slidePanel: "._slideout-panel",
+  slidePanelCloser: "#PanelCloser",
+  slidePanelHeader:"._panel-header",
+  panelTitle: "#PanelWrap h2",
   
   // Acquisition Package Details
   stepAcquisitionText: "#Step_AcquisitionPackageDetails >.step-text",
@@ -26,14 +37,14 @@ module.exports = {
   subStepContactInformationTxt: "#SubStep_ContactInformation > .step-text",
   subStepContactInformationLink: "#SubStep_ContactInformation",
 
-  //Fair Opporunity
-  stepFairOppLink:"#Step_FairOpportunityProcess",
-  stepFairOppText: "#Step_FairOpportunityProcess .step-text",
-  stepFairOppTextCircle: "#Step_FairOpportunityProcess .step-circle",  
-  subStepExceptionsLink: "#SubStep_Exceptions",
-  subStepExceptionsText: "#SubStep_Exceptions .step-text",
-  subStepJustificationLink: "#SubStep_JustificationandApproval",
-  subStepJustificationText: "#SubStep_JustificationandApproval .step-text",
+  //Evaluation Criteria
+  stepEvaluationCriteriaLink: "#Step_EvaluationCriteria",
+  stepEvaluationCriteriaText: "#Step_EvaluationCriteria .step-text",
+  subStepFairOppLink:"#SubStep_ExceptiontoFairOpportunity",
+  stepFairOppText: "#SubStep_ExceptiontoFairOpportunity .step-text",
+  stepFairOppTextCircle: "#SubStep_ExceptiontoFairOpportunity .step-circle",  
+  subStepEvaluationLink: "#SubStep_CreateEvaluationPlan",
+  subStepEvaluationText: "#SubStep_CreateEvaluationPlan .step-text", 
 
   //Background
   stepBackgroundLink: "#Step_Background",
@@ -75,6 +86,8 @@ module.exports = {
   subStepCoIText: "#SubStep_ConflictofInterest .step-text",
   subStepPPSLink: "#SubStep_PackagingPackingandShipping",
   subStepPPSText: "#SubStep_PackagingPackingandShipping .step-text",
+  subStepTravelLink: "#SubStep_Travel",
+  subStepTravelText:"#SubStep_Travel .step-text",
   subStepTrainingLink: "#SubStep_Training",
   subStepTrainingText: "#SubStep_Training .step-text",
   
@@ -88,12 +101,7 @@ module.exports = {
   substepPDOILink: "#SubStep_PublicDisclosureofInformation",
   substepPDOIText: "#SubStep_PublicDisclosureofInformation .step-text",
   substepSection508Link: "#SubStep_Section508Standards",
-  substepSection508Text: "#SubStep_Section508Standards .step-text",
-
-  //Evaluation Criteria
-  stepEvaluationCriteriaLink: "#Step_EvaluationCriteria",
-  stepEvaluationCriteriaText: "#Step_EvaluationCriteria .step-text",
-
+  substepSection508Text: "#SubStep_Section508Standards .step-text",  
 
   //Financial Details
   stepFinancialDetailsLink:"#Step_FinancialDetails",
@@ -111,4 +119,26 @@ module.exports = {
 
   somethingElse: "#PackageNameHeader",
 
+  //navigation bar
+  navigationBar: "#TopNavBar",
+  dashboardTab: "#TopNavButton_Dashboard",
+  acquisitionsTab: "#TopNavButton_Acquisitions",
+  acquisitionDropdownList: "#TopNavBarMenu_Acquisitions .v-menu__content .v-list",
+  myPackage: "#TopNavBarMenuItem_MyPackages",
+  myTaskOrder:"#TopNavBarMenuItem_MyTaskOrders",
+  portfoliosTab: "#TopNavBarItem_Portfolios",  
+  portfolioBtn:"#TopNavButton_Portfolios",
+  portalsTab: "#TopNavButton_Portals",
+
+  //portalDropdownIcon:"#TopNavButton_Portals",
+  portalsDropdownList:"#TopNavBarMenu_Portals .v-menu__content .v-list",
+  userTab: "#TopNavButton_User",
+  userDropdownList: "#TopNavBarMenu_User .v-menu__content .v-list", 
+  userIntials: "._initials",
+  userName: "#TopNavBarMenu_User .font-weight-700",
+  userEmail:"#TopNavBarMenu_User .font-size-12",  
+  profileMenuitem: "#TopNavBarMenuItem_Profile",
+  contactSupportMenuItem: "#TopNavBarMenuItem_ContactSupport",
+  submitFeedbackMenuItem: "#TopNavBarMenuItem_SubmitFeedback",
+  signOutMenuItem:"#TopNavBarMenuItem_Signout",
 }

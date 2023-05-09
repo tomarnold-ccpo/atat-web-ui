@@ -1,6 +1,6 @@
 <template>
-<button style="outline:none" @blur="$emit('blur')">
-  <v-form ref="atatFileUploadForm">
+<div style="outline:none">
+  <!-- <v-form ref="atatFileUploadForm"> -->
     <div
       :id="id + 'EventDiv'"
       v-cloak
@@ -21,18 +21,18 @@
         ]"
         multiple
         prepend-icon=""
-        accept="application/pdf,application/vnd.ms-excel, .xlsx"
+        accept="application/pdf,application/vnd.ms-excel, .xlsx, .doc, .docx"
         :truncate-length="truncateLength"
-        :clearable="false"
+        :clearable="true"
         @change="fileUploadChanged"
         :hide-details="true"
-        :rules="_rules"
+        :rules="setRules"
         :validate-on-blur="validateOnBlur"
         @keydown.tab="setErrorMessage()"
       >
         <template v-slot:prepend-inner>
           <div
-            v-if="isFullSize"
+            v-if="isFullSize && !startCompact"
             class="content d-flex flex-column align-center pt-9"
             @mousedown="fileUploadClicked"
           >
@@ -49,7 +49,20 @@
                 browse to upload
               </a>
             </p>
-            <p class="mt-3 mb-9 text-base" v-html="helpText"></p>
+            <p class="mt-3 mb-9 text-base">
+              <span v-if="filesRequired">{{maxNumberOfFiles}} files required</span>
+              <span v-if="filesRequired && showSupportedFileTypes">
+                • 
+              </span>
+              <span v-if="showSupportedFileTypes">
+                  Supported file types: {{formatFileTypes}} 
+              </span>
+              <span v-if="(showSupportedFileTypes && showMaxSize) ||
+                            (filesRequired && showMaxSize)">
+                • 
+              </span>
+              <span v-if="showMaxSize">Max file size: {{fileSizeConversion}}GB</span>
+            </p>
           </div>
           <div
             v-else
@@ -74,15 +87,27 @@
                   browse to upload
                 </a>
               </p>
-              <p class="ml-auto mb-0 mt-2 text-base" v-html="helpText"></p>
+              <p class="ml-auto mb-0 mt-2 text-base">
+                <span v-if="filesRequired">{{maxNumberOfFiles}} files required</span>
+                <span v-if="filesRequired && showSupportedFileTypes">
+                  • 
+                </span>
+                <span v-if="showSupportedFileTypes">
+                    Supported file types: {{formatFileTypes}} 
+                </span>
+                <span v-if="(showSupportedFileTypes && showMaxSize) ||
+                              (filesRequired && showMaxSize)">
+                  • 
+                </span>
+                <span v-if="showMaxSize">Max file size: {{fileSizeConversion}}GB</span>
+              </p>
             </div>
-            
           </div>
         </template>
       </v-file-input>
       <ATATErrorValidation
         class="file-upload-validation-messages"
-        :showAllErrors="true"
+        :showAllErrors="showAllErrors"
         :errorMessages="errorMessages"
       />
     </div>
@@ -93,24 +118,28 @@
       :isFullSize.sync="isFullSize"
       :multiplesAllowed="multiplesAllowed"
       :title="fileListTitle"
-      @delete="(file) => $emit('delete', file)"
+      :removeAll.sync="_removeAll"
+      @delete="deleteFile"
     />
-  </v-form>
-</button>
+  <!-- </v-form> -->
+  </div>
 </template>
 
 <script lang="ts">
-/* eslint-disable camelcase */
+/* eslint camelcase: 0 */
+
 import Vue from "vue";
-import { Component, Prop, PropSync } from "vue-property-decorator";
+import { Component, Prop, PropSync, Watch } from "vue-property-decorator";
 import ATATSVGIcon from "@/components/icons/ATATSVGIcon.vue";
 import ATATFileList from "@/components/ATATFileList.vue";
 import {
-  AttachmentService,
+  AttachmentServiceTypes,
   AttachmentServiceFactory,
 } from "@/services/attachment";
 import { invalidFile, uploadingFile } from "types/Global";
 import ATATErrorValidation from "@/components/ATATErrorValidation.vue";
+import AcquisitionPackage from "@/store/acquisitionPackage";
+import { setItemToPlural } from "@/helpers";
 
 @Component({
   components: {
@@ -126,25 +155,28 @@ export default class ATATFileUpload extends Vue {
     atatFileUpload: Vue & {
       errorBucket: string[];
       errorCount: number;
-    };
-    atatFileUploadForm: Vue & {
       resetValidation: () => void;
       reset: () => void;
+      validate: () => boolean;
     };
   };
 
   // props
   @Prop({ default: 15 }) private truncateLength!: string;
   @Prop({ default: "" }) private id!: string;
-  @Prop({ default: "Use a PDF file with a max size of 1 GB." }) helpText!: string;
   @Prop({ default: true}) private multiplesAllowed!: boolean;
+  @Prop({ default: true}) private showAllErrors?: boolean;
+  @Prop({ default: false}) private filesRequired?: boolean;
+  @Prop() private restrictedNames?: string[];
   @Prop({ default: "required"}) private requiredMessage!: string;
   @Prop({ default: 20 }) private maxNumberOfFiles!: number;
-  
+  @Prop({ default: true }) private showSupportedFileTypes!: boolean;
+  @Prop({ default: true }) private showMaxSize!: boolean;
+  @Prop({ default: false }) private startCompact?: boolean;
   @Prop({ default: () => [] }) private validFileFormats!: string[];
-  @PropSync("invalidFiles", { default: () => [] })
-  private _invalidFiles!: invalidFile[];
+  @PropSync("invalidFiles", { default: () => [] }) private _invalidFiles!: invalidFile[];
   @Prop({ default: "", required: true }) private attachmentServiceName!: string;
+  @PropSync("removeAll") public _removeAll?: boolean;
   @PropSync("rules", { default: () => [] }) private _rules!: ((
     v: string
   ) => string | true | undefined)[];
@@ -161,15 +193,24 @@ export default class ATATFileUpload extends Vue {
   private fileUploadControl!: HTMLInputElement;
   private isHovering = false;
   private isFullSize = true;
-  private fileAttachmentService?: AttachmentService;
+  private fileAttachmentService?: typeof AttachmentServiceTypes;
   private errorMessages: string[] = [];
   private validateOnBlur = true;
-  
-  
+  private moreThanMax = false
   get isFileUploadDisabled():boolean{
-    return this.maxNumberOfFiles<=this._validFiles.length;
+    return this.maxNumberOfFiles <= this._validFiles.length;
   }
-  
+
+  get fileSizeConversion(): number {
+    return this.maxFileSizeInBytes / 1073741824
+  }
+  get formatFileTypes(): string {
+    //eslint-disable-next-line prefer-const 
+    let formatted = this.validFileFormats.map((file) =>{
+      return ` .${file}`
+    })
+    return formatted.join(',')
+  }
   get isFileUploadDisplayed(): boolean {
     if (this.multiplesAllowed === false){
       return this._validFiles.length !== 1 || this.errorMessages.length > 0
@@ -177,7 +218,19 @@ export default class ATATFileUpload extends Vue {
     return true;
   }
 
+  get setRules():((v: string) => string | true | undefined)[] {
+    return this._validFiles.length>0 && this._invalidFiles.length === 0 ? [] : this._rules;
+  }
+
   //Events
+
+  private async deleteFile(file: File): Promise<void>{
+    this.$emit('delete', file);
+    await this.$refs.atatFileUpload.$emit("click:clear");
+    await this.$refs.atatFileUpload.$emit("change");
+    this.reset();
+  }
+
   /**
    * triggers html file upload click
    */
@@ -265,7 +318,10 @@ export default class ATATFileUpload extends Vue {
    *
    */
   private removeInvalidFiles(files: FileList): void {
+
     let _validFiles = Array.from(files || []).filter((vFile) => {
+
+      const isRestrictedName = this.restrictedNames?.includes(vFile.name)
       const thisFileFormat = vFile.name.substring(
         vFile.name.lastIndexOf(".") + 1
       );
@@ -282,6 +338,7 @@ export default class ATATFileUpload extends Vue {
       });
       const isFileSizeValid = vFile.size < this.maxFileSizeInBytes;
 
+
       //log Invalid Files
       if (!isValidFormat) {
         this.logInvalidFiles(vFile, doesFileExist);
@@ -292,13 +349,23 @@ export default class ATATFileUpload extends Vue {
       if (!isFileSizeValid) {
         this.logInvalidFiles(vFile, doesFileExist);
       }
-      
-      return isValidFormat && !doesFileExist && isFileSizeValid;
-    });
+      if(isRestrictedName){
+        this.logInvalidFiles(vFile, doesFileExist);
+      }
 
+      return isValidFormat && !doesFileExist && isFileSizeValid && !isRestrictedName;
+    });
+    if((this._validFiles.length + _validFiles.length) > this.maxNumberOfFiles){
+      this.moreThanMax = true
+      const errorText = "Too many files selected. You can upload up to " + 
+          this.maxNumberOfFiles + " " + setItemToPlural(this.maxNumberOfFiles, "file") + "."
+      this.$refs.atatFileUpload.errorBucket
+        .push(errorText)
+      this.setErrorMessage()
+      return
+    }
    
     //allows for maxNumberOfFiles to be uploaded
-    
     if(this.maxNumberOfFiles<_validFiles.length){
       _validFiles = _validFiles.filter((obj, idx)=>{
         return idx<this.maxNumberOfFiles
@@ -327,8 +394,8 @@ export default class ATATFileUpload extends Vue {
   private uploadFiles(): void {
     for (let i = 0; i < this._validFiles.length; i++) {
       //wire up file upload here
+      //eslint-disable-next-line prefer-const 
       let uploadingFileObj = this._validFiles[i] as uploadingFile;
-
       // only new files are uploaded
       if (!uploadingFileObj.isUploaded) {
         window.setTimeout(() => {
@@ -336,6 +403,7 @@ export default class ATATFileUpload extends Vue {
             ?.upload(uploadingFileObj.file, (total, current) => {
               current = 0;
               total = Math.ceil(total / 1000);
+              //eslint-disable-next-line prefer-const 
               let progress = window.setInterval(() => {
                 if (current < total) {
                   current = current + Math.floor(Math.random() * total);
@@ -350,7 +418,6 @@ export default class ATATFileUpload extends Vue {
               //download link - link to the file download
               //sys_id the unique id of the attachment in the attachment table
               //table_sys_id the unique id of the table/record
-
               const { download_link, sys_id, table_sys_id } = result.attachment;
               uploadingFileObj.link = download_link || "";
               uploadingFileObj.attachmentId = sys_id || "";
@@ -395,10 +462,21 @@ export default class ATATFileUpload extends Vue {
     }
   }
 
+  public get validateFormNow(): boolean {
+    return AcquisitionPackage.getValidateNow;
+  }
+
+  @Watch('validateFormNow')
+  public validateNowChange(): void {
+    if (!this.$refs.atatFileUpload.validate()){
+      this.setErrorMessage();
+    }
+  }
+
   private setErrorMessage(): void {
     this.$nextTick(() => {
       this.errorMessages = this.$refs.atatFileUpload.errorBucket;
-      if (this._invalidFiles.length > 0){
+      if (this._invalidFiles.length > 0 || this.moreThanMax){
         this.errorMessages = this.errorMessages.filter(
           (msg)=>msg !== this.requiredMessage
         );
@@ -408,9 +486,9 @@ export default class ATATFileUpload extends Vue {
 
   private clearErrorMessages(): void {
     Vue.nextTick(() => {
-      this.$refs.atatFileUploadForm.reset();
+      this.$refs.atatFileUpload.reset();
       Vue.nextTick(() => {
-        this.$refs.atatFileUploadForm.resetValidation();
+        this.$refs.atatFileUpload.resetValidation();
       });
     });
   }
@@ -452,6 +530,9 @@ export default class ATATFileUpload extends Vue {
 
   private updated(): void {
     this.isFullSize = this._validFiles.length === 0;
+    if (this._validFiles.length>0){
+      this.$refs.atatFileUpload.resetValidation();
+    }
   }
 }
 </script>

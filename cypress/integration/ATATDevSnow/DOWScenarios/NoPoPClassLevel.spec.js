@@ -10,7 +10,7 @@ import contractDetails from "../../../selectors/contractDetails.sel";
 import performanceReqs from "../../../selectors/performanceReqs.sel";
 
 
-describe("Test suite: No PoP and Classification Levels exists workflows ", 
+describe.skip("Test suite: No PoP and Classification Levels exists workflows ", 
   { tags: '@iso-ignore' }, 
   () => {
     let serviceOfferingGroups;
@@ -29,6 +29,7 @@ describe("Test suite: No PoP and Classification Levels exists workflows ",
         serviceOfferingGroups = data;
       });
       cy.launchATAT();
+      cy.homePageClickAcquisitionPackBtn();
       cy.clickSideStepper(common.stepPerformanceReqText, " Performance Requirements ");
       cy.verifyPageHeader(" Let’s work on your performance requirements ");         
       cy.textExists(

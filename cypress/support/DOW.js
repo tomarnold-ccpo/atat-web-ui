@@ -6,6 +6,7 @@ import {
 import common from '../selectors/common.sel';
 import 'cypress-iframe';
 import performanceReq from '../selectors/performanceReqs.sel';
+import contractDetails from "../selectors/contractDetails.sel";
 
 //This command is to verify the checkbox label and header for the ServiceOffering Page
 Cypress.Commands.add("verifyServiceOfferingHeader", (categoryObj) => {
@@ -36,7 +37,7 @@ Cypress.Commands.add("verifyServiceOfferingsForCategory", (categoryObj) => {
       cy.btnClick(common.continueBtn, " Continue ");   
 
       cy.verifyPageHeader(
-        "Next, we’ll gather your requirements for " + serviceOfferingNames[index]
+        "Now we’ll gather your requirements for " + serviceOfferingNames[index]
       ); 
       // eslint-disable-next-line cypress/no-unnecessary-waiting
       cy.wait(1000); // needed because with 2 back button clicks, needs a pause for scroll into view
@@ -133,7 +134,7 @@ Cypress.Commands.add("verifyStorageTypeListItems", (categoryObj) => {
   categoryObj.storageTypeCypressLabels.forEach((list) => {
     storageTypeListItems.push(list);
   });
-  cy.verifyDropdownList(performanceReq.storageTypeDropdownList, storageTypeListItems);     
+  cy.verifyStringArray(performanceReq.storageTypeDropdownList, storageTypeListItems);     
 });
 
 //This command is to verify the checkbox label and header for the Compute Category
@@ -155,4 +156,21 @@ Cypress.Commands.add("selectGeneralXaaSOption", (categoryObj,serviceOfferingGrou
   });
   cy.verifyCheckBoxLabels('input[type=checkbox]', categoryLabels);  
   cy.verifyGeneralXaaSHeader(categoryObj);
+});
+
+Cypress.Commands.add("selectSecretLevel", (secretSelector, alertMessage) => {
+  cy.findElement(secretSelector).should("not.be.checked")
+    .check({ force: true })
+    .then(() => {
+      cy.messageDisplays(contractDetails.alertMessage, alertMessage);
+          
+    });
+});
+
+Cypress.Commands.add("unselectSecretLevel", (secretSelector) => {
+  cy.findElement(secretSelector).should("be.checked")
+    .uncheck({ force: true })
+    .then(() => {      
+      cy.findElement(contractDetails.alertMessage).should("not.exist");      
+    });
 });

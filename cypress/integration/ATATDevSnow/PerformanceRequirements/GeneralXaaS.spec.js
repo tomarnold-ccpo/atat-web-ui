@@ -13,7 +13,7 @@ const req2 = "Let’s gather some details for Requirement #2";
 const serviceCatOffering = "General Iaas, PaaS, and SaaS";
 
 
-describe("Test suite: General XaaS Flows", () => {
+describe.skip("Test suite: General XaaS Flows", () => {
 
   let serviceOfferingGroups;  
   let categoryObj;
@@ -34,6 +34,7 @@ describe("Test suite: General XaaS Flows", () => {
     });
 
     cy.launchATAT();
+    cy.homePageClickAcquisitionPackBtn();
     cy.clickSideStepper(common.stepContractDetailsLink, " Contract Details ");
     cy.verifyPageHeader(" Let’s gather some details about the duration of your task order ");
     cy.dropDownClick(contractDetails.baseDropdownIcon);

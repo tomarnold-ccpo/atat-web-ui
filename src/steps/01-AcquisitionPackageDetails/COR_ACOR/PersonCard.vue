@@ -70,9 +70,10 @@
       tabindex="0"
       id="RemoveSelectedContactInfo"
       @click="removeCorInfo"
-    >Remove {{ corOrAcor }} info
+    >Remove {{ corOrAcor }}
     </a>
     <ATATDialog
+      id="ChangeContactInfoModal"
       :showDialog.sync="showDialog"
       :title="'Request change to ' + corOrAcor + '’s contact information'"
       no-click-animation

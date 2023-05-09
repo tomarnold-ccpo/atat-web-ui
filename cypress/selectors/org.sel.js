@@ -1,10 +1,10 @@
 module.exports = {
-  serviceAgencyLabel: "#ServiceOrAgency_AutoComplete_Wrapper label",
-  serviceAgencyDropDownIcon: "#ServiceOrAgency_AutoComplete_Wrapper" +
+  agencyLabel: "#Agency_AutoComplete_Wrapper label",
+  agencyDropDownIcon: "#Agency_AutoComplete_Wrapper" +
     " .v-input__icon.v-input__icon--append",
-  serviceAgencyInput: "#ServiceOrAgency",
-  serviceAgencyAutoListItems: "#ServiceOrAgency_AutoComplete_Wrapper .v-list-item__title",
-  serviceAgencyError:"#ServiceOrAgency_AutoComplete_Wrapper .field-error",
+  agencyInput: "#Agency",
+  agencyAutoListItems: "#Agency_AutoComplete_Wrapper .v-list-item__title",
+  agencyError:"#Agency_AutoComplete_Wrapper .field-error",
   sectionOneHeaderText: "#Section1 h2.form-section-heading",
   orgNameControl: "#OrgName_text_field_control",
   orgNameTxtLabel: "#OrgName_text_field_label",
@@ -51,7 +51,7 @@ module.exports = {
   countryInput: "#Country",
   countryListItems:"#Country_AutoComplete_Wrapper .v-list-item__title ",
   zipCodeTxtBox: "#ZIPCode_text_field",
-  requestModalTitle: "#modalDialogTitle",
+  requestModalTitle: "#AddAgencyModalTitle",
   requestAgencyLink: "#RequestAgencyAdded",
   agencyOrgNameTxtLabel: "#AgencyOrgName_text_field_label",
   streetError: "#StreetAddress_text_field_control .field-error",

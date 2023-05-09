@@ -6,8 +6,8 @@ describe("Test suite: SAC: Section 508 Standards", () => {
   
   beforeEach(() => {
     bootstrapMockApis();
-    cy.launchATAT();
-        
+    cy.launchATAT(true);
+    cy.homePageClickAcquisitionPackBtn();    
   });    
     
   it("TC1: SAC: Section508 Standards is active on the Vertical Stepper", () => {
@@ -101,7 +101,7 @@ describe("Test suite: SAC: Section 508 Standards", () => {
     const operationTxt = randomString(5);
     cy.enterTextInTextField(sac.operationTxtBox, operationTxt);
     cy.btnExists(common.continueBtn, " Continue ").not("[disabled]").click();
-    cy.findElement(common.stepEvaluationCriteriaText)
+    cy.findElement(common.stepFinancialDetailsText)
       .should("be.visible")
       .and('have.css', 'color', colors.primary);
   });

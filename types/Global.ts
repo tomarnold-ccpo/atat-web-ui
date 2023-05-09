@@ -1,10 +1,69 @@
+/* eslint-disable camelcase */
 import { Component } from "vue";
-import { 
+import {
   RouteConfigMultipleViews,
-  RouteConfigSingleView 
+  RouteConfigSingleView
 } from "vue-router/types/router";
 
 import { AdditionalButton } from "@/store/steps/types";
+
+import {
+  CurrentContractDTO,
+  FairOpportunityDTO,
+  OrganizationDTO,
+  ProjectOverviewDTO,
+  ContactDTO,
+  BaseTableDTO,
+  ClinDTO,
+  EDAResponse,
+  ReferenceColumn,
+} from "@/api/models";
+
+export interface DocReviewData {
+  projectOverview: ProjectOverviewDTO;
+  organization: OrganizationDTO;
+  fairOpportunity: FairOpportunityDTO;
+  currentContract: CurrentContractDTO;
+  cor: ContactDTO | null,
+  acor: ContactDTO | null,
+}
+
+export interface MenuIcon {
+  name: string;
+  height: string;
+  width: string;
+  color: string;
+}
+export interface TopNavItem {
+  title: string;
+  subtitle?: string;
+  parentTitle?: string;
+  component?: Component;
+  spaSectionTitle?: string;
+  externalUrl?: string;
+  icon?: MenuIcon;
+  link?: string;
+  menu?: TopNavItem[]
+  menuPosition?: string;
+  align?: string;
+  isProfile?: boolean;
+  separatorBefore?: boolean;
+}
+
+export interface MeatballMenuItem {
+  title: string;
+  action?: string;
+  url?: string;
+  disabled?: boolean;
+  separatorBefore?: boolean;
+  icon?: MenuIcon;
+  hidden?:boolean;
+}
+export interface MeatballMenu {
+  id: string;
+  left: boolean;
+  menuItems: MeatballMenuItem[];
+}
 
 export interface StepperRouteHandlerParams {
   previous: string;
@@ -23,6 +82,8 @@ export interface StepperStep {
   additionalButtons?: AdditionalButton[];
   backButtonText?: string;
   continueButtonText?:string;
+  altContinueAction?: string;
+  lastStep?: boolean;
 }
 
 /**
@@ -31,10 +92,15 @@ export interface StepperStep {
 export interface SelectData {
   text?: string;
   value?: string;
+  description?: string;
   multiSelectOrder?: number;
   disabled?: boolean;
   hidden?: boolean;
   header?: string;
+  divider?: boolean;
+  isSelectable?: boolean;
+  sys_id?: string;
+  name?:string;
 }
 
 /**
@@ -53,22 +119,26 @@ export interface AutoCompleteItemGroups {
  */
 interface StepperRouteBase {
 
-    stepNumber?: string;
-    completePercentageWeight?: number;
-    menuText?: string;
-    completed?: boolean;
-    /**
-     * Setting this flag to true will prevent item from being 
-     * rendered in menu but will still include it in the route record
-     */
-    excludeFromMenu?: boolean;
-    /**
-     * A handler to 
-     */
-    routeResolver?: (currentRoute: string, direction: string) => string;
-    additionalButtons?: AdditionalButton[];
-    backButtonText?: string;
-    continueButtonText?: string;
+  stepNumber?: string;
+  completePercentageWeight?: number;
+  menuText?: string;
+  completed?: boolean;
+  /**
+   * Setting this flag to true will prevent item from being
+   * rendered in menu but will still include it in the route record
+   */
+  excludeFromMenu?: boolean;
+  /**
+   * A handler to
+   */
+  routeResolver?: (currentRoute: string, direction: string) => string;
+  additionalButtons?: AdditionalButton[];
+  backButtonText?: string;
+  continueButtonText?: string;
+  altContinueAction?: string;
+  continueButtonColor?: string;
+  stepCompleteOnEnter?: string;
+  stepCompleteOnLeave?: string;
 }
 
 /**
@@ -90,24 +160,26 @@ export interface StepperRouteMultipleConfig extends StepperRouteBase, RouteConfi
  */
 export type StepperRouteConfig = StepperRouteSingleConfig | StepperRouteMultipleConfig;
 
-export interface RadioButton {
-  id: string;
-  label: string;
-  value: string;
-  description?: string;
-  disabled?: boolean;
-}
-
 export interface Checkbox {
   id: string;
   label: string;
   value: string;
   description?: string;
+  textfieldValue?: string;
 }
 
+export interface RadioButton extends Checkbox {
+  disabled?: boolean;
+  readonly?: boolean;
+}
+
+export interface FilterOption extends RadioButton {
+  abbreviation?: string;
+  type?: string;
+}
 export interface SlideoutPanelContent {
   component: Component;
-  title: string;
+  title?: string;
 }
 
 export interface CountryObj {
@@ -117,6 +189,15 @@ export interface CountryObj {
   active: boolean;
   suggested?: boolean;
   mask?: string[];
+}
+
+export interface BreadCrumbItem {
+  disabled?: boolean,
+  exact?: boolean,
+  href?: string,
+  link?: boolean,
+  text?: string | number,
+  to?: string;
 }
 
 export interface ToastObj {
@@ -134,6 +215,7 @@ export interface stringObj {
   [key: string]: string;
 }
 
+
 export interface PoP {
   duration: number | null;
   unitOfTime: string;
@@ -142,8 +224,8 @@ export interface PoP {
 }
 
 export interface RankData {
-  grade: string; 
-  name: string; 
+  grade: string;
+  name: string;
   sysId: string;
 }
 
@@ -191,6 +273,15 @@ export interface uploadingFile{
   isUploaded: boolean;
 }
 
+export interface signedDocument{
+  itemName:string,
+  requiresSignature:boolean,
+  alertText?:string,
+  show:boolean
+}
+
+
+
 export interface invalidFile{
   file: File;
   doesFileExist: boolean;
@@ -198,28 +289,44 @@ export interface invalidFile{
   statusCode?: number;
 }
 
-export interface DOWPoP {
+export interface DOWCardData {
+  title: string;
   label: string;
-  sysId: string;
+  icon: string;
+  learnMore: string,
+  route: string;
+  defineRequirements: boolean,
+  section: "ReplicateOptimize" | "ArchitecturalDesign" | "XaaS" | "CloudSupport";
+  isComplete: boolean,
+  buttonLabel?: string
 }
 
 export interface DOWClassificationInstance {
+  acquisitionPackage: ReferenceColumn | string;
   sysId?: string;
   impactLevel: string; // for sorting
   classificationLevelSysId: string;
   anticipatedNeedUsage: string;
   entireDuration: string;
-  selectedPeriods?: DOWPoP[];
+  selectedPeriods?: string[];
   labelLong?: string;
   labelShort?: string;
+  classifiedInformationTypes?: string;
+  tsContractorClearanceType?: string;
+  typeOfDelivery?: "" | "SHIPPED" | "PICK_UP";
+  typeOfMobility?: "" | "MAN_PORTABLE" | "MODULAR" | "OTHER" | "NO_PREFERENCE";
+  typeOfMobilityOther?: string;
+  ts_contractor_clearance_type?: string;
+  updated_description?: "YES" | "NO"
 }
 
 export interface DOWServiceOffering {
   name: string;
+  acquisitionPackageSysId: string;
   otherOfferingName?: string;
-  "sys_id": string; //service offering sys id
+  sys_id: string;
   serviceId: string; // id of the service
-  description: string;
+  description?: string;
   classificationInstances?: DOWClassificationInstance[];
   sequence: string;
 }
@@ -273,40 +380,95 @@ export interface lineChartData {
 }
 
 export interface OtherServiceOfferingData {
+  acquisitionPackageSysId?: string;
   instanceNumber: number;
-  environmentType: string;
+  environmentType?: string;
   classificationLevel?: string;
-  deployedRegions: string[];
-  deployedRegionsOther: string;
+  deployedRegions?: string[];
+  deployedRegionsOther?: string;
   descriptionOfNeed: string;
   entireDuration: string;
   periodsNeeded: string[];
-  operatingSystemAndLicensing: string;
-  numberOfVCPUs: string;
-  memory: string;
-  storageType: string;
-  storageAmount: string;
-  performanceTier: string;
-  performanceTierOther: string;
-  numberOfInstancesNeeded: string;
+  operatingSystemAndLicensing?: string;
+  numberOfVCPUs?: string;
+  memoryAmount?: string;
+  memoryUnit?: StorageUnit;
+  storageType?: string;
+  storageAmount?: string;
+  storageUnit?: StorageUnit;
+  performanceTier?: string;
+  performanceTierOther?: string;
+  numberOfInstances?: string;
   requirementTitle?: string;
+  usageDescription?: string;
+  operatingEnvironment?: string;
+  databaseType?: string;
+  databaseTypeOther?: string;
+  licensing?: string;
+  operatingSystem?: string;
+  region?: string;
+  processorSpeed?: string;
+  networkPerformance?: string;
+  databaseLicensing?: string;
+  sysId?: string;
+  personnelOnsiteAccess?: string;
+  tsContractorClearanceType?: string;
+  // eslint-disable-next-line max-len
+  trainingType?: "" | "ONSITE_INSTRUCTOR_CONUS" | "ONSITE_INSTRUCTOR_OCONUS" | "VIRTUAL_INSTRUCTOR" | "VIRTUAL_SELF_LED" | "NO_PREFERENCE" | string;
+  trainingLocation?: string;
+  trainingTimeZone?: string;
+  trainingPersonnel?: string;
+  trainingFacilityType?: "" | "GOVERNMENT_FACILITY" | "NON_GOVERNMENT_FACILITY" | string;
+  serviceType?: string;
+  canTrainInUnclassEnv?: string;
+  trainingRequirementTitle?: string;
+  classifiedInformationTypes?: string;
+  isComplete?: boolean;
 }
 
-// export interface ComputeInstanceTableData {
-//   instanceNumber: number;
-//   type: string;
-//   location: string;
-//   qty: string;
-//   vCPU: string;
-//   memory: string;
-//   storage: string;
-//   classification: string;
-//   performance: string;
-// }
+export interface totalClassLevelsInDOWObject {
+  classLevelSysId: string,
+  DOWObjectTotal: number
+}
 
 export interface OtherServiceSummaryTableData {
   instanceNumber: number;
   typeOrTitle?: string;
+  classification?: string;
+  qty?: string;
+  vCPU?: string;
+  memory?: string;
+  storageAmount?: string;
+  storageType?: string;
+  performance?: string;
+  requirementTitle?: string;
+  duration?: string;
+  personnelOnsiteAccess?: string;
+  trainingType?: string;
+  sysId?:string;
+}
+
+export interface TravelSummaryTableData {
+  acquisition_package?: string;
+  sys_id?: string;
+  instanceNumber: number;
+  trip_location: string;
+  selected_periods: string[];
+  number_of_trips: string;
+  number_of_travelers: string;
+  duration_in_days: string;
+}
+
+export interface TravelCalloutDataItem {
+    period: string,
+    periodSysId: string,
+    totalNumberOfTripsPerPeriod: number,
+    trips: string[]
+}
+
+export interface EnvInstanceSummaryTableData {
+  instanceSysId?: string;
+  instanceNumber: number;
   location?: string;
   qty?: string;
   vCPU?: string;
@@ -314,26 +476,79 @@ export interface OtherServiceSummaryTableData {
   storage?: string;
   classification?: string;
   performance?: string;
-  requirementTitle?: string;
-  duration?: string;
+  isValid?: boolean;
 }
 
 export interface User {
   firstName?: string;
   lastName?: string;
+  fullName?: string;
+  fullNameForSort?: string;
   email?: string;
   role?: string;
+  phoneNumber?: string;
+  phoneExt?: string;
+  designation?: string;
+  salutation?: string;
+  agency?: string;
+  department?: string;
+  officePhone?: string; // labeled as "Commercial phone" field is "phone" in SNOW sys_user table
+  mobilePhone?: string;
+  dsnPhone?: string; // field is "home_phone" in SNOW sys_user table
+  userName?: string;
+  sys_id?: string;
 }
-export interface Portfolio {
+
+export interface Portfolio extends BaseTableDTO {
+  sysId?: string;
   title?: string;
   description?: string;
   status?: string;
   csp?: string;
-  serviceAgency?: string;
+  agency?: string;
   createdBy?: string;
   provisioned?: string;
   members?: User[];
   updated?: string;
+  taskOrderNumber?: string;
+}
+
+export interface PortfolioCardData extends Portfolio {
+  fundingStatus?: string;
+  fundingAlertChipString?: string;
+  branch?: string;
+  lastModifiedStr?: string;
+  lastModifiedDate?: string;
+  currentPoP?: string;
+  expiration?: string;
+  totalObligated?: string;
+  fundsSpent?: string;
+  fundsSpentPercent?: string;
+  fundsRemaining?: string;
+  isManager?: boolean;
+}
+
+export interface PortfolioSummaryQueryParams {
+  role?: string;
+  fundingStatuses?: FilterOption[];
+  csps?: FilterOption[];
+  portfolioStatus?: string;
+  sort?: string;
+  searchString?: string;
+}
+
+export interface PortfolioAdmin {
+  DoDId?: string;
+  hasUnclassifiedAccess?: YesNo;
+  unclassifiedEmail?: string;
+  hasScrtAccess?: YesNo;
+  scrtEmail?: string;
+}
+
+export interface PortfolioProvisioning extends EDAResponse {
+  portfolioTitle?: string;
+  serviceOrAgency?: string;
+  admins?: PortfolioAdmin[];  
 }
 
 export interface EmailEntry {
@@ -346,4 +561,214 @@ export interface EmailEntry {
 export interface MemberInvites {
   emails: string[];
   role: string;
+}
+
+export interface FundingTrackerAlert {
+  alertType: string;
+}
+
+export interface TaskOrderCardData {
+  taskOrderNumber?: string,
+  periodOfPerformance?: string,
+  totalObligated?: string,
+  totalValue?: string,
+  totalLifeCycle?: string,
+  totalFundsSpent?: string,
+  status?: string,
+  sys_id?: string,
+  clins?:ClinDTO[],
+}
+
+export interface AwardedTaskOrderDetails {
+  taskOrderNumber: string,
+  contractor: string,
+  csp: string,
+  cspLong: string,
+  contractIssuingOffice: string,
+  periodOfPerformance: string,
+  totalObligatedAmount: number,
+  totalAmount: number,
+  classificationLevel: string
+}
+
+export interface ClinTableRowData {
+  isActive?: boolean,
+  isExercised?: boolean,
+  isExpired?: boolean,
+  isPending?: boolean,
+  CLINNumber?:string,
+  CLINTitle?:string,
+  PoP?: Record<string, string>,
+  obligatedFunds?:string,
+  totalCLINValue?:string,
+  totalFundsSpent?:string,
+  fundsRemaining?: {percent:string, fundsRemaining:string},
+  isOverspent?: boolean,
+  status?:string,
+  statusLabel?: string;
+  startNewClinGroup?: boolean,
+  popStartDate: string
+}
+
+export interface LegendLink {
+  id: string;
+  linkText: string;
+  emitText: string;
+}
+
+export interface IGCE {
+  travelEstimateNeeds: boolean,
+  estimatedTravelCosts: string[],
+  surgeCapacity: boolean,
+  surgeCapabilities: string,
+}
+
+export enum TRAINING_TYPE {
+  ONSITE_INSTRUCTOR_CONUS = "On-site instructor led CONUS",
+  ONSITE_INSTRUCTOR_OCONUS = "On-site instructor led OCONUS",
+  VIRTUAL_INSTRUCTOR = "Virtual instructor-led",
+  VIRTUAL_SELF_LED = "Virtual self-led",
+  NO_PREFERENCE = "No preference"
+}
+
+export enum TRAINING_FACILITY_TYPE {
+  GOVERNMENT_FACILITY = "Government facility",
+  NON_GOVERNMENT_FACILITY = "Non-government facility"
+}
+
+export type EvalPlanMethod = "" | "LPTA" | "BVTO" | "BEST_USE" | "LOWEST_RISK";
+
+export type EvalPlanSourceSelection = "" | "NO_TECH_PROPOSAL" | "TECH_PROPOSAL"
+    | "SET_LUMP_SUM" | "EQUAL_SET_LUMP_SUM";
+
+export type StorageUnit = "" | "GB" | "TB" | "PB";
+export type YesNo = "" | "YES" | "NO";
+export type SingleMultiple = "SINGLE" | "MULTIPLE" | "";
+
+export type UnitOfTime = undefined | "" | "DAYS" | "WEEKS" | "MONTHS" | "YEARS";
+export type ProductOrType = undefined | "" | "PRODUCT" | "FEATURE";
+
+export interface CurrEnvInstanceUsage {
+  currentUsageDescription?: EnvironmentInstanceUsage;
+  trafficSpikeCauses?: string[]; // EJY need to refactor in component
+  isTrafficSpikeEventBased?: YesNo;
+  isTrafficSpikePeriodBased?: YesNo;
+  trafficSpikeEventDescription?: string;
+  trafficSpikePeriodDescription?: string;
+}
+
+export interface CurrEnvInstanceConfig {
+  licensing?: string;
+  operatingSystem?: string;
+  numberOfVCPUs?: number | null;
+  processorSpeed?: number | null;
+  memoryAmount?: number | null;
+  memoryUnit?: StorageUnit;
+  storageType?: string;
+  storageAmount?: number | null;
+  storageUnit?: StorageUnit;
+}
+
+export interface CurrEnvInstancePerformance {
+  performanceTier?: PerformanceTier;
+  numberOfInstances?: number | null;
+  dataEgressMonthlyAmount?: number | null;
+  dataEgressMonthlyUnit?: StorageUnit;
+}
+
+export interface CurrEnvInstancePricingDetails {
+  currentPaymentArrangement?: PaymentArrangement;
+  pricingPeriodExpirationDate?: string;
+}
+
+export type EnvironmentLocation = "" | "CLOUD" | "ON_PREM" | "HYBRID";
+export type EnvironmentInstanceLocation = "" | "CLOUD" | "ON_PREM";
+export type EnvironmentReplicateOptimized = "" | "YES_REPLICATE" | "YES_OPTIMIZE" | "NO";
+export type EnvironmentInstanceUsage = "" | "EVEN_USAGE" | "IRREGULAR_USAGE";
+export type StorageType = "" | "BLOCK" | "OBJECT" | "FILE" | "ARCHIVE";
+export type PerformanceTier = "" | "GENERAL" | "COMPUTE" | "MEMORY" | "STORAGE";
+export type PaymentArrangement = "" | "PREPAID" | "PAY_AS_YOU_GO";
+export type SecurityClassification = ""|"SECRET" | "TOPSECRET";
+export type DomainType = ""|"UNCLASSIFIED_TO_SECRET" | "UNCLASSIFIED_TO_TOP_SECRET" |
+    "SECRET_TO_UNCLASSIFIED" | "SECRET_TO_TOP_SECRET" | "TOP_SECRET_TO_UNCLASSIFIED" |
+    "TOP_SECRET_TO_SECRET"
+export interface CurrentEnvironment {
+  currentEnvironmentExists?: YesNo;
+  hasSystemDocumentation?: YesNo;
+  systemDocumentation?: string[]; // List - sys_ids from sys_attachment table
+  hasMigrationDocumentation?: YesNo;
+  migrationDocumentation?: string[]; // List - sys_ids from sys_attachment table
+  envLocation?: EnvironmentLocation;
+  envClassificationsCloud?: string[]; // array of classification level sys_ids
+  envClassificationsOnPrem?: string[]; // array of classification level sys_ids
+  envInstances?: CurrentEnvironmentInstance[]; // array of sys_ids
+  currentEnvironmentReplicatedOptimized?: EnvironmentReplicateOptimized;
+  statementReplicatedOptimized?: string;
+  additionalGrowth?: YesNo;
+  anticipatedYearlyAdditionalCapacity?: number;
+  hasPhasedApproach?: YesNo;
+  phasedApproachSchedule?: string;
+  needsArchitecturalDesignServices?: YesNo;
+  statementArchitecturalDesign?: string;
+  applicationsNeedArchitecturalDesign?: string;
+  dataClassificationsImpactLevels?: string[];
+  externalFactorsArchitecturalDesign?: string;
+}
+
+export interface CurrentEnvironmentInstance {
+  instanceLocation?: EnvironmentInstanceLocation;
+  deployedRegions?: string[];
+  classificationLevel?: string; // classification level sys_id
+  currentUsage?: CurrEnvInstanceUsage,
+  usersPerRegion?: string; // json stringified sys_id/count pairs
+  instanceConfig?: CurrEnvInstanceConfig;
+  performanceTier?: CurrEnvInstancePerformance;
+  pricingDetails?: CurrEnvInstancePricingDetails;
+  additionalInformation?: string;
+}
+export interface SecurityRequirement {
+  type: SecurityClassification;
+  classification_information_type: string[],
+  ts_contractor_clearance_type?: string,
+}
+
+export interface CrossDomainSolution {
+  crossDomainSolutionRequired: string;
+  entireDuration: string;
+  anticipatedNeedUsage: string;
+  solutionType:{
+    type: string,
+    dataQuantity: number
+  }[],
+  projectedFileStream:string;
+  selectedPeriods: string[];
+}
+
+export interface EstimateOptionValue {
+  option?: SingleMultiple;
+  estimated_values: string[];
+}
+
+export interface EstimateOptionValueObjectArray {
+  option?: SingleMultiple;
+  estimated_values?: string;
+}
+
+export interface TrainingEstimate {
+  sysId?: string;
+  costEstimateType: 
+    "" | "PER_PERSON" | "PER_SESSION" | "ANNUAL_SUBSCRIPTION" | "MONTHLY_SUBSCRIPTION" | string;
+  estimate: EstimateOptionValueObjectArray;
+  estimatedTrainingPrice: string;
+  trainingOption: SingleMultiple;
+  cloudSupportEnvironmentInstance: ReferenceColumn | string;
+  dow_task_number?: string;
+}
+
+export type CSP = undefined | "" | "AWS" | "GCP" | "AZURE" | "ORACLE";
+
+export enum ClassificationLevels {
+  UNCL = "Unclassified",
+  SCRT = "Secret",
+  TSCRT = "Top Secret"
 }

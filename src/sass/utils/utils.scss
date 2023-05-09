@@ -20,6 +20,9 @@ $total: 900;
 
 .no-text-decoration{
     text-decoration: none !important;
+    text-decoration-color: transparent !important;
+    text-decoration-thickness: none !important;
+    text-decoration-style: none !important;
 }
 
 //removes most unwanted effect of gray ripple when 
@@ -65,10 +68,16 @@ $positions: 'static' 'relative' 'fixed' 'absolute' 'sticky';
 }
 
 // max width wrapper classes
-$widths: 500, 640, 740, 760, 1200;
+$widths: 500, 640, 740, 840, 760, 1200;
 @each $width in $widths {
   .max-width-#{$width} {
     max-width: #{$width}px !important;
+  }
+}
+
+._input-max-width-240 {
+  ._input-wrapper {
+    max-width: 240px;
   }
 }
 
@@ -85,6 +94,10 @@ $widths: 500, 640, 740, 760, 1200;
         margin-top: 0px !important;
         margin-bottom: 0px !important;
     }
+}
+
+.no-margin {
+  margin: 0 !important;
 }
 
 .height-auto {
@@ -142,4 +155,41 @@ $widths: 500, 640, 740, 760, 1200;
 
 ._no-shadow {
   box-shadow: none !important;
+}
+
+.default-box-shadow{
+  box-shadow: 0px 1px 4px rgba(27, 27, 27, 0.1) !important;
+}
+
+.ellipsis{
+  display:inline-block;
+  overflow:hidden;
+  vertical-align:bottom;
+}
+
+.ellipsis:after {
+  display:inline-block;
+  -webkit-animation: ellipsis-keyframes 900ms steps(4, jump-none) infinite;
+  animation: ellipsis-keyframes 900ms steps(4, jump-none) infinite;
+  content: "...";
+}
+
+@keyframes ellipsis-keyframes {
+  0%{
+    transform:translateX(-100%)
+  }
+}
+
+@-webkit-keyframes ellipsis-keyframes {
+  0%{
+    transform:translateX(-100%)
+  }
+}
+
+._shadow {
+  box-shadow: 0px 4px 10px rgba(194, 194, 194, 0.5) !important;
+}
+
+._line-height-1 {
+  line-height: 1 !important;
 }

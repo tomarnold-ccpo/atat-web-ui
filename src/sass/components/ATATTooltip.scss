@@ -2,6 +2,8 @@
   display: block !important;
   background-color: transparent !important;
   opacity: 1 !important;
+  z-index: 300 !important;
+
   ._tooltip-content-wrap {
     opacity: 0 !important;
     transition: opacity 0.25s !important;
@@ -10,18 +12,31 @@
     line-height: 1.5em !important;
     display: block;
     border-radius: 4px;
+    position: relative;
 
-    &::after {
+
+    &:not(._left, ._no-pointer)::after {
       content: "";
       position: absolute;
-      bottom: -5px;
+      bottom: -15px;
       left: calc(50% - 10px);
       width: 0;
       height: 0;
       border-style: solid;
-      border-width: 10px 10px 0 10px;
-      border-color: rgba($base-darkest, 0.9) transparent transparent transparent;
+      border: 10px solid transparent;
+      border-top-color: rgba($base-darkest, 0.9);
     }
+    &._left::after {
+      content: "";
+      position: absolute;
+      width: 0;
+      height: 0;
+      right: -15px;
+      top: calc(50% - 10px);
+      border: 10px solid transparent;
+      border-left-color: rgba($base-darkest, 0.9);
+    }
+    
   }
   
   &.menuable__content__active {

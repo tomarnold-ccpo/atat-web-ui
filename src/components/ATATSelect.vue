@@ -5,6 +5,7 @@
         v-if="label"
         :id="id + '_dropdown_field_label'"
         :for="id + '_dropdown'"
+        :class="{ 'd-sr-only': labelSrOnly }"
       >
         {{ label }}
         <span v-if="optional" class="optional">
@@ -30,10 +31,15 @@
         :placeholder="placeholder"
         :class="{ 'mt-2' : label }"
         :return-object="returnObject"
-        :style="'width: ' + width + 'px'"
-        :rules="rules"
+        :style="'max-width: ' + width + 'px; width: ' + width + 'px'"
+        :rules="_rules"
         :menu-props="{ bottom: true, offsetY: true }"
+        :disabled="menuDisabled"
       >
+        <template v-if="showSelectedValue" v-slot:selection="{ item }">
+          {{ item.value }}
+        </template>
+
         <template v-slot:item="{ item, on }">
           <v-list-item 
             v-on="on" 
@@ -48,10 +54,12 @@
               :item-value = item.value
             >
               <v-list-item-title class="body">
-                <v-row no-gutters align="center">
-                  <span>{{ item.text }}</span>
-                </v-row>
+                {{ item.text }}
               </v-list-item-title>
+              <v-list-item-subtitle v-if="item.description">
+                {{ item.description }}
+              </v-list-item-subtitle>
+
             </v-list-item-content>
           </v-list-item>
         </template>
@@ -79,11 +87,12 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { Component, Emit, Prop, PropSync } from "vue-property-decorator";
+import { Component, Emit, Prop, PropSync, Watch } from "vue-property-decorator";
 
 import ATATErrorValidation from "@/components/ATATErrorValidation.vue";
 import ATATSVGIcon from "@/components/icons/ATATSVGIcon.vue";
 import { SelectData } from "../../types/Global";
+import AcquisitionPackage from "@/store/acquisitionPackage";
 
 @Component({
   components: {
@@ -99,6 +108,7 @@ export default class ATATSelect extends Vue {
       errorCount: number;
       blur: ()=> void;
       focus: ()=> void;
+      validate: () => boolean;
     };
   }; 
 
@@ -106,7 +116,7 @@ export default class ATATSelect extends Vue {
   @Prop({ default: "" }) private placeholder!: string;
   @Prop({ default: "" }) private label!: string;
   @Prop({ default: [] }) private items?: SelectData[];
-  @Prop({ default: ()=>[] }) private rules!: Array<unknown>;
+  @PropSync ("rules", { default: ()=>[] }) private _rules!: Array<unknown>;
   @Prop({ default: "id_is_missing" }) private id!: string;
   @Prop({ default: false }) private error!: boolean;
   @Prop({ default: false }) private optional!: boolean;
@@ -114,6 +124,9 @@ export default class ATATSelect extends Vue {
   @Prop({ default: "" }) private width!: string;
   @Prop({ default: true }) private showErrorMessages?: boolean;
   @Prop({ default: "standard" }) public iconType?: string;
+  @Prop({ default: false }) private menuDisabled?: boolean;
+  @Prop({ default: false }) private showSelectedValue?: boolean;
+  @Prop( {default: false }) private labelSrOnly?: boolean;
 
   //data
   private rounded = false;
@@ -123,13 +136,43 @@ export default class ATATSelect extends Vue {
 
   @Emit("onChange")
   private onChange(val: string | SelectData): void {
-    this.selected = val;
-    this.setErrorMessage();
-    this.$emit("selectValueChange", { 
-      "newSelectedValue": val, 
-      "selectedBeforeChange": this.selectedBeforeChange 
-    });
-    this.selectedBeforeChange = val;
+    const isString = typeof val === "string";
+    const isObject = typeof val === "object"
+    let isSelectable = true;
+    if (isObject && Object.prototype.hasOwnProperty.call(val, "isSelectable")
+      && val.isSelectable !== undefined) {
+      isSelectable = val.isSelectable;
+    }
+    if (isString || isSelectable) {
+      this.selected = val;
+      this.setErrorMessage();
+      this.$emit("selectValueChange", { 
+        "newSelectedValue": val, 
+        "selectedBeforeChange": this.selectedBeforeChange 
+      });
+      this.selectedBeforeChange = val;
+    }
+  }
+
+  public get validateFormNow(): boolean {
+    return AcquisitionPackage.getValidateNow;
+  }
+
+  @Watch('validateFormNow')
+  public validateNowChange(): void {
+    this.addRequiredRule();
+    if(!this.$refs.atatSelect.validate()){
+      this.setErrorMessage();
+      this.$emit('errorMessage', this.errorMessages);
+    }
+  }
+
+  public addRequiredRule(): void {
+    // accommodates for dropdowns that are loaded
+    // with no preselected value but required validation saveOnLeave
+    Vue.nextTick(()=>{
+      this._rules.push((v:string)=>v !== "" || "")
+    })
   }
 
   private onInput(v: string) {
@@ -141,6 +184,7 @@ export default class ATATSelect extends Vue {
       this.errorMessages = this.$refs.atatSelect && Object.prototype.hasOwnProperty.call(
         this.$refs.atatSelect, "errorBucket"
       ) ? this.$refs.atatSelect.errorBucket : [];
+      this.$emit('errorMessage', this.errorMessages);
     }, 0);
   }
 

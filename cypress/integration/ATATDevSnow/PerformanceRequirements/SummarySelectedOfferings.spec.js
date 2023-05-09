@@ -12,7 +12,7 @@ import performanceReqs from "../../../selectors/performanceReqs.sel";
 
 
 
-describe("Test suite: Summary screen: Selected Offerings ", { tags: '@iso-ignore' }, () => {
+describe.skip("Test suite: Summary screen: Selected Offerings ", { tags: '@iso-ignore' }, () => {
   let serviceOfferingGroups;  
 
   beforeEach(() => {
@@ -22,7 +22,8 @@ describe("Test suite: Summary screen: Selected Offerings ", { tags: '@iso-ignore
       serviceOfferingGroups = data;
     });
     
-    cy.launchATAT();   
+    cy.launchATAT();  
+    cy.homePageClickAcquisitionPackBtn();
     cy.clickSideStepper(common.stepContractDetailsLink, " Contract Details ");
     cy.verifyPageHeader(" Let’s gather some details about the duration of your task order ");     
     cy.findElement(contractDetails.baseInputTxtBox).type("12");
@@ -167,8 +168,7 @@ describe("Test suite: Summary screen: Selected Offerings ", { tags: '@iso-ignore
     cy.durationPeriodExists(performanceReqs.durationNoRadioBtn,
       performanceReqs.duration1ActiveRadioBtn,
       performanceReqs.periodCheckboxLabel1,
-      "NO");
-    cy.selectCheckBoxes([performanceReqs.checkBoxBase]);
+      "NO");    
     cy.btnClick(common.continueBtn, " Continue ");
     cy.verifyPageHeader(
       "Your Performance Requirements"

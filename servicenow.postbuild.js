@@ -189,7 +189,7 @@ function resolveRobotoFontsAndImagePaths(fileContent){
     }
   
     // image paths
-    const imageMatches = findMatches(fileContent, imgRegex, 7);
+    const imageMatches = findMatches(fileContent, imgRegex, 9);
     if (imageMatches) {
       const newImagePath = servicenowConfig.IMG_API_PATH;
       console.log(`Replacing the image paths with: ${newImagePath}`);
@@ -267,14 +267,17 @@ function renameFiles(directory, extensionToAppend) {
   );
   const files = fs.readdirSync(directory);
   files.forEach((file) => {
-    const oldFilename = path.join(directory, file);
-    console.log("-- found: ", oldFilename);
-    try {
-      const newFilename = oldFilename + ourFakeExtension;
-      fs.renameSync(oldFilename, newFilename);
-      console.log("-- renamed: ", newFilename);
-    } catch (err) {
-      console.error(err);
+    //ignore template (.docx) files
+    if (file.toLowerCase().indexOf(".docx")===-1) {
+      const oldFilename = path.join(directory, file);
+      console.log("-- found: ", oldFilename);
+      try {
+        const newFilename = oldFilename + ourFakeExtension;
+        fs.renameSync(oldFilename, newFilename);
+        console.log("-- renamed: ", newFilename);
+      } catch (err) {
+        console.error(err);
+      }
     }
   });
 }
@@ -283,8 +286,8 @@ function reportMatchDiscrepancies() {
   for (const key in buildMatches) {
     const matches = buildMatches[key];
     assert.strictEqual(
-      matches.expected,
       matches.found,
+      matches.expected,
       `Expected ${matches.expected} matches to be found.  Check the input and ${key}`
     );
   }

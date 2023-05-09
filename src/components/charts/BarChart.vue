@@ -3,6 +3,7 @@
 </template>
 
 <script lang="ts">
+/*eslint prefer-const: 1 */
 import Vue from "vue";
 import { Component, Prop, Watch } from "vue-property-decorator";
 import Chart, { ChartData, ChartOptions } from "chart.js/auto";
@@ -23,12 +24,14 @@ export default class BarChart extends Vue {
     this.myChart.update();
   }
 
-  private mounted() {
+  private async mounted() {
+    // it appears the 'await' is not needed, but without it the JWCC unit tests fail
     this.createChart();
   }
 
   public createChart(): void {
     if (this.chartId) {
+      //eslint-disable-next-line prefer-const 
       let plugins: any = [];
       const ctx = document.getElementById(this.chartId) as HTMLCanvasElement;
       if (this.useChartDataLabels) {

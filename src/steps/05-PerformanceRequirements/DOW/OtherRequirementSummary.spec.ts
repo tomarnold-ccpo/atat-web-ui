@@ -34,12 +34,12 @@ describe("Testing ServiceOfferingDetails Component", () => {
     periodsNeeded: [],
     operatingSystemAndLicensing: "",
     numberOfVCPUs: "",
-    memory: "",
+    memoryAmount: "",
     storageType: "",
     storageAmount: "",
     performanceTier: "",
     performanceTierOther: "",
-    numberOfInstancesNeeded: "1",
+    numberOfInstances: "1",
     requirementTitle: "",
   }];
 
@@ -108,7 +108,6 @@ describe("Testing ServiceOfferingDetails Component", () => {
         ));
   
       await wrapper.vm.loadOnEnter();
-      // EJY check computeDataArray is still in data
       console.log("computeDataArray", wrapper.vm.$data.computeDataArray);
 
     });

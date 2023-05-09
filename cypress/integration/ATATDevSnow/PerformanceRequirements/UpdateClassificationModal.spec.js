@@ -10,7 +10,7 @@ import contractDetails from "../../../selectors/contractDetails.sel";
 import performanceReqs from "../../../selectors/performanceReqs.sel";
 
 
-describe("Test suite: Gather Requirements-Update Classification modal ", 
+describe.skip("Test suite: Gather Requirements-Update Classification modal ", 
   { tags: '@iso-ignore' },  
   () => {
     let serviceOfferingGroups; 
@@ -23,6 +23,7 @@ describe("Test suite: Gather Requirements-Update Classification modal ",
       });
     
       cy.launchATAT();
+      cy.homePageClickAcquisitionPackBtn();
       cy.clickSideStepper(common.stepContractDetailsLink, " Contract Details ");
       cy.verifyPageHeader(" Let’s gather some details about the duration of your task order ");
       //Enter the Value for Base

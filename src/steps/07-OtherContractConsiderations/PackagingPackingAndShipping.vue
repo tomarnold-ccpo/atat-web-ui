@@ -1,43 +1,47 @@
 
 <template>
   <div class="mb-7">
-    <v-container fluid class="container-max-width">
-      <v-row>
-        <v-col class="col-12">
-          <h1 class="page-header mb-3">
-            Do you need to include packaging, packing, or shipping instructions?
-          </h1>
-          <div class="copy-max-width">
-            <p class="mb-10" id="IntroP">
-              This is not common for most cloud computing acquisitions. However,
-              you may have a situation, like an on-premises to cloud migration, 
-              where you need to transfer data on hard drives to a CSP.            
-            </p>
-            <p id="SelectMessage">
-              Select all that apply to your contracting effort.
-            </p>
-          </div>
-          <ATATCheckboxGroup
-            id="PackagingEtcCheckboxes"
-            :value.sync="selectedOptions"
-            :hasOtherValue="true"
-            :otherValue="otherValue"
-            :otherValueEntered.sync="otherValueEntered"
-            :otherValueRequiredMessage="otherValueRequiredMessage"
-            :noneValue="noneApplyValue"
-            :items="checkboxItems"
-            otherEntryType="textarea"
+    <v-form ref="form" lazy-validation>
+      <v-container fluid class="container-max-width">
+        <v-row>
+          <v-col class="col-12">
+            <h1 class="page-header mb-3">
+              Do you need to include packaging, packing, or shipping instructions?
+            </h1>
+            <div class="copy-max-width">
+              <p class="mb-10" id="IntroP">
+                This is not common for most cloud computing acquisitions. However, 
+                you may have a situation, like Tactical Edge device delivery, 
+                instructional materials in support of training, or physical data 
+                transfer services where you need to transfer data on hard drives 
+                to a CSP.            
+              </p>
+              <p id="SelectMessage">
+                Select all that apply to your contracting effort.
+              </p>
+            </div>
+            <ATATCheckboxGroup
+              id="PackagingEtcCheckboxes"
+              :value.sync="selectedOptions"
+              :hasOtherValue="true"
+              :otherValue="otherValue"
+              :otherValueEntered.sync="otherValueEntered"
+              :otherValueRequiredMessage="otherValueRequiredMessage"
+              :noneValue="noneApplyValue"
+              :items="checkboxItems"
+              otherEntryType="textarea"
 
-            name="checkboxes"
-            :card="false"
-            class="copy-max-width"
-            :rules="[
-              $validators.required('Please select an option.')
-            ]"
-          />
-        </v-col>
-      </v-row>
-    </v-container>
+              name="checkboxes"
+              :card="false"
+              class="copy-max-width"
+              :rules="[
+                $validators.required('Please select an option.')
+              ]"
+            />
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-form>
   </div>
 </template>
 <script lang="ts">
@@ -46,7 +50,7 @@ import { Component, Mixins, Watch } from "vue-property-decorator";
 
 import ATATCheckboxGroup from "@/components/ATATCheckboxGroup.vue";
 
-import AcquisitionPackage from "@/store/acquisitionPackage";
+import AcquisitionPackage, { StoreProperties } from "@/store/acquisitionPackage";
 import { ContractConsiderationsDTO } from "@/api/models";
 import { Checkbox } from "../../../types/Global";
 import { hasChanges } from "@/helpers";
@@ -86,7 +90,7 @@ export default class PackagingPackingAndShipping extends Mixins(SaveOnLeave) {
     },
     {
       id: "Other",
-      label: "Other",
+      label: "Other - Write custom instructions",
       value: this.otherValue,
       description: "",
     },
@@ -115,36 +119,29 @@ export default class PackagingPackingAndShipping extends Mixins(SaveOnLeave) {
     };
   }
   
-  private savedData = {
-    contractor_provided_transfer: "",
-    packaging_shipping_other: "",
-    packaging_shipping_other_explanation: "",
-    packaging_shipping_none_apply: "",
-  } as Record<string, string>;
+  private savedData: ContractConsiderationsDTO = {};
 
   public async loadOnEnter(): Promise<void> {
-    const storeData 
-      = await AcquisitionPackage.loadContractConsiderations() as Record<string, string>;
+    const storeData = await AcquisitionPackage.loadData<ContractConsiderationsDTO>({
+      storeProperty: StoreProperties.ContractConsiderations
+    });
     
     if (storeData) {
-      const keys: string[] = [
-        "contractor_provided_transfer",
-        "packaging_shipping_other",
-        "packaging_shipping_other_explanation",
-        "packaging_shipping_none_apply"
-      ];
-      keys.forEach((key: string) => {
-        if (Object.prototype.hasOwnProperty.call(storeData, key)) {
-          this.savedData[key] = storeData[key];
-        }
-      });
+      this.savedData = {
+        contractor_provided_transfer: storeData.contractor_provided_transfer,
+        packaging_shipping_other: storeData.packaging_shipping_other, 
+        packaging_shipping_other_explanation: storeData.packaging_shipping_other_explanation,
+        packaging_shipping_none_apply: storeData.packaging_shipping_none_apply
+
+      }
+
       this.savedData.contractor_provided_transfer === "true" 
         ? this.selectedOptions.push(this.contractorProvidedTransportValue) : null; 
       this.savedData.packaging_shipping_other === "true" 
         ? this.selectedOptions.push(this.otherValue) : null; 
       this.savedData.packaging_shipping_none_apply === "true" 
         ? this.selectedOptions.push(this.noneApplyValue) : null; 
-      this.otherValueEntered = this.savedData.packaging_shipping_other_explanation;
+      this.otherValueEntered = this.savedData.packaging_shipping_other_explanation as string;
     } else {
       AcquisitionPackage.setCurrentContract(this.currentData);
     }
@@ -155,12 +152,17 @@ export default class PackagingPackingAndShipping extends Mixins(SaveOnLeave) {
   }
 
   protected async saveOnLeave(): Promise<boolean> {
+    await AcquisitionPackage.setValidateNow(true);
+
     if (this.noneApplySelected === "true" || this.otherSelected !== "true") {
       this.otherValueEntered = "";
     }
     try {
       if (this.isChanged()) {
-        await AcquisitionPackage.saveContractConsiderations(this.currentData);
+        await AcquisitionPackage.saveData({
+          data: this.currentData,
+          storeProperty: StoreProperties.ContractConsiderations,
+        });
       }
     } catch (error) {
       console.log(error);

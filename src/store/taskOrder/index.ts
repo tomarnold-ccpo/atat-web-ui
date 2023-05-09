@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 import api from "@/api";
-import { TaskOrderDTO } from "@/api/models";
+import {FundingRequirementDTO, TaskOrderDTO} from "@/api/models";
 import {
   VuexModule,
   Module,
@@ -17,6 +17,7 @@ import storeHelperFunctions, {
 } from "../helpers";
 import { convertColumnReferencesToValues } from "@/api/helpers";
 import FinancialDetails from "../financialDetails";
+import AcquisitionPackage from "@/store/acquisitionPackage";
 
 const ATAT_TASK_ORDER_KEY = "ATAT_TASK_ORDER_KEY";
 
@@ -77,20 +78,19 @@ export class TaskOrderStore extends VuexModule {
   }
 
   @Action({ rawError: true })
-  public async initialize(acquisitionPackageId: string): Promise<void> {
-
+  public async initialize(acquisitionPackageId: string): Promise<TaskOrderDTO> {
     const sessionRestored = storeHelperFunctions.retrieveSession(ATAT_TASK_ORDER_KEY);
     if (sessionRestored) {
       this.setStoreData(sessionRestored);
-      this.setInitialized(true);
     }else{
       const taskOrder = {
         ...initial,
         acquisition_package: acquisitionPackageId,
       };
-      this.taskOrder = await this.save(taskOrder);
-      this.setInitialized(true);
+      await this.save(taskOrder);
     }
+    this.setInitialized(true);
+    return this.taskOrder || initial;
   }
 
   @Action({ rawError: true })
@@ -98,21 +98,23 @@ export class TaskOrderStore extends VuexModule {
     try {
       // this converts any references columns to strings
       value = convertColumnReferencesToValues(value);
+      // separate out into objects that need to be saved to task order & funding req tables
+      const taskOrderForSave: any = {
+        clins: value.clins,
+        pop_start_date: value.pop_start_date,
+        pop_end_date: value.pop_end_date,
+        portfolio: value.portfolio,
+        task_order_number: value.task_order_number,
+        task_order_status: value.task_order_status
+      }
 
       const sysId = this.taskOrder?.sys_id || "";
-
       const saveTaskOrder =
         sysId.length > 0
-          ? api.taskOrderTable.update(sysId, value)
-          : api.taskOrderTable.create(value);
-
-      const savedTaskOrder = await saveTaskOrder;
-
-      this.setTaskOrder(savedTaskOrder);
-      
-      if (savedTaskOrder.funding_plan) {
-        await FinancialDetails.loadFundingPlanData();
-      }
+          ? api.taskOrderTable.update(sysId, taskOrderForSave)
+          : api.taskOrderTable.create(taskOrderForSave);
+      let savedTaskOrder = await saveTaskOrder;
+      savedTaskOrder = convertColumnReferencesToValues(savedTaskOrder);
 
       return savedTaskOrder;
     } catch (error) {
@@ -132,6 +134,17 @@ export class TaskOrderStore extends VuexModule {
       }
     }
     return this.value.incrementally_funded;
+  }
+
+  @Action
+  public async reset(): Promise<void> {
+    sessionStorage.removeItem(ATAT_TASK_ORDER_KEY);
+    this.doReset();
+  }
+
+  @Mutation private doReset(): void {
+    this.initialized = false;
+    this.taskOrder = null;
   }
 
 }
