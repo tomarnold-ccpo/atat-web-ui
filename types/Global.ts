@@ -545,6 +545,8 @@ export interface PortfolioAdmin {
   hasScrtAccess?: YesNo;
   scrtEmail?: string;
   impactLevels?:string[]
+  hasTSAccess?: YesNo;
+  tsEmail?: string;
 }
 
 export interface PortfolioProvisioning extends EDAResponse {

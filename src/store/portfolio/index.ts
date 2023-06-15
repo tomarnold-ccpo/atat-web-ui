@@ -2,23 +2,28 @@
 import {Action, getModule, Module, Mutation, VuexModule, } from "vuex-module-decorators";
 import rootStore from "../index";
 
-import { 
-  FilterOption, 
+import {
+  Environment,
+  FilterOption,
   MemberInvites, 
-  Portfolio, 
-  PortfolioCardData, 
-  PortfolioProvisioning, 
-  PortfolioSummaryQueryParams, 
+  Operator,
+  Portfolio,
+  PortfolioCardData,
+  PortfolioProvisioning,
+  PortfolioSummaryQueryParams,
   User,
 } from "../../../types/Global"
 
 import AcquisitionPackage, { Statuses } from "@/store/acquisitionPackage";
-import {AlertDTO, PortfolioSummaryDTO} from "@/api/models";
+import {AlertDTO,
+  EnvironmentDTO, OperatorDTO, PortfolioSummaryDTO, UserSearchResultDTO} from "@/api/models";
 import AlertService from "@/services/alerts";
 import _ from "lodash";
 import {api} from "@/api";
 import CurrentUserStore from "../user";
-import { convertColumnReferencesToValues } from "@/api/helpers";
+import {AxiosRequestConfig} from "axios";
+import {convertColumnReferencesToValues} from "@/api/helpers";
+import { formatISO9075, startOfTomorrow } from "date-fns";
 
 export const AlertTypes =  {
   SPENDING_ACTUAL:"SPENDING_ACTUAL",
@@ -34,6 +39,27 @@ export const FundingAlertTypes = {
   POPFundsDepleted: "POPFundsDepleted",
   POPExpired: "POPExpired",
 };
+
+interface CSPAdmin {
+  dodId: string,
+  email: string,
+}
+interface EnvironmentForProvisioning {
+  csp_name: string;
+  operators: CSPAdmin[]
+}
+
+export interface CSPProvisioningData {
+  name: string;
+  classification_level?: string;
+  cloud_distinguisher?: CloudDistinguisher;
+}
+
+interface CloudDistinguisher {
+  description?: string;
+  display_name?: string;
+  name?: string;
+}
 
 export interface FundingAlertData {
   alerts: AlertDTO[],
@@ -53,10 +79,12 @@ export const thresholdAtOrAbove = (value: string, threshold: number): boolean =>
   return !Number.isNaN(numVal) && numVal >=threshold;
 }
 
+// ATAT TODO - future ticket when implemented: get env specific url from 
+// atat_environments table - column `dashboard_link`
 export const cspConsoleURLs: Record<string, string> = {
-  azure: "https://portal.azure.com/abc123",
+  azure: "https://portal.azure.com/",
   aws: "https://signin.amazonaws-us-gov.com",
-  google: "https://console.cloud.google.com",
+  gcp: "https://console.cloud.google.com",
   oracle: "https://console.oraclecloud.com",
 }
 
@@ -98,7 +126,6 @@ export class PortfolioDataStore extends VuexModule {
     this.showTOPackageSelection = bool;
   }
 
-
   public didNotUseDAPPS = false;
   @Action({rawError: true})
   public async setDidNotUseDAPPS(bool: boolean): Promise<void> {
@@ -125,13 +152,74 @@ export class PortfolioDataStore extends VuexModule {
     return this.selectedAcquisitionPackageSysId;
   }
   
-
   public portfolioProvisioningObj: PortfolioProvisioning 
     = _.cloneDeep(initialPortfolioProvisioningObj());
  
   @Action({rawError: true})
   public async getPortfolioProvisioningObj(): Promise<PortfolioProvisioning> {
     return this.portfolioProvisioningObj;
+  }
+
+  public CSPProvisioningData: CSPProvisioningData[] = [];
+  public CSPHasImpactLevels = false;
+  public get doesCSPHaveImpactLevels(): boolean {
+    return this.CSPHasImpactLevels;
+  }
+  @Action({ rawError: true})
+  public async setCSPProvisioningData(): Promise<void> {
+    try {
+      let cspData: CSPProvisioningData[] = [];
+      let hasCloudDistinguishers = false;
+      const csp = this.portfolioProvisioningObj.csp?.toUpperCase();
+      const response = await api.cloudServiceProviderTable.getQuery({
+        params: {
+          sysparm_fields: "name,cloud_distinguisher,classification_level",
+          sysparm_query: "vendorIN" + csp
+        }
+      });
+      response.forEach(obj => {
+        let csp: CSPProvisioningData = { 
+          name: obj.name, 
+          classification_level: obj.classification_level,
+          cloud_distinguisher: {} 
+        };
+        const cd = obj.cloud_distinguisher;
+        if (cd && cd.length) {
+          const cdObj = JSON.parse(cd);
+          csp.cloud_distinguisher = cdObj;
+          hasCloudDistinguishers = true;
+        }
+        cspData.push(csp);
+      });
+      cspData = cspData.sort((a,b) => a.name > b.name ? 1 : -1)
+      await this.doSetCSPProvisioningData({cspData, hasCloudDistinguishers});
+    } catch (error) {
+      console.error(error);
+    }
+  }
+  @Mutation
+  public async doSetCSPProvisioningData(data: {
+    cspData: CSPProvisioningData[],
+    hasCloudDistinguishers: boolean
+  }
+  ): Promise<void> {
+    this.CSPProvisioningData = data.cspData;
+    this.CSPHasImpactLevels = data.hasCloudDistinguishers;
+  }
+
+  public envsForProvisioning: EnvironmentForProvisioning[] = [];
+  @Mutation
+  public addEnvForProvisioning(data: { 
+    csp_name: string, admin: CSPAdmin}
+  ): void {
+    const i = this.envsForProvisioning.findIndex(obj => obj.csp_name === data.csp_name);
+    if (i > -1) {
+      this.envsForProvisioning[i].operators.push(data.admin);
+    } else {
+      this.envsForProvisioning.push(
+        {csp_name: data.csp_name, operators: [data.admin]}
+      );
+    }
   }
 
   @Action({rawError: true})
@@ -160,38 +248,44 @@ export class PortfolioDataStore extends VuexModule {
           portfolioAgency = organizationInfo.agency || ""
         }
       }
-
     }
-    const unclassifiedOperators: Record<string, string>[] = [];
-    const scrtOperators: Record<string, string>[] = [] 
+
+    const unclassCSP = this.CSPProvisioningData.find(obj => obj.classification_level === "U");
+    const unclassName = unclassCSP?.name as string;
+    const scrtCSP = this.CSPProvisioningData.find(obj => obj.classification_level === "S");
+    const scrtName = scrtCSP?.name as string;
+
     this.portfolioProvisioningObj.admins?.forEach(admin => {
       if (admin.hasUnclassifiedAccess && admin.unclassifiedEmail && admin.DoDId) {
-        unclassifiedOperators.push({ dodId: admin.DoDId, email: admin.unclassifiedEmail });
+        if (admin.impactLevels && admin.impactLevels.length) {
+          const dodId = admin.DoDId;
+          const email = admin.unclassifiedEmail;
+          admin.impactLevels.forEach(il => {
+            const adm: CSPAdmin = { dodId, email }
+            this.addEnvForProvisioning({ csp_name: il, admin: adm });
+          });
+        } else {
+          const adm: CSPAdmin = { dodId: admin.DoDId, email: admin.unclassifiedEmail};
+          this.addEnvForProvisioning({ csp_name: unclassName, admin: adm });
+        }      
       }
       if (admin.hasScrtAccess && admin.scrtEmail && admin.DoDId) {
-        scrtOperators.push({ dodId: admin.DoDId, email: admin.scrtEmail });
+        const adm: CSPAdmin = { dodId: admin.DoDId, email: admin.scrtEmail};
+        this.addEnvForProvisioning({ csp_name: scrtName, admin: adm });
       }
     });
 
     const provisioningPostObj = {
       portfolioName: portfolioName || this.portfolioProvisioningObj.portfolioTitle,
       portfolioAgency: portfolioAgency || this.portfolioProvisioningObj.serviceOrAgency,
-      environments: {
-        Unclassified: {
-          operators: unclassifiedOperators
-        },
-        Secret: {
-          operators: scrtOperators
-        }
-      }
+      environments: this.envsForProvisioning
     }
-
-    // const 
 
     await api.edaApi.provisionPortfolio(
       provisioningPostObj,
       this.portfolioProvisioningObj.taskOrderNumber as string,
-      this.selectedAcquisitionPackageSysId)
+      this.selectedAcquisitionPackageSysId
+    );
   }
 
   /**
@@ -230,6 +324,7 @@ export class PortfolioDataStore extends VuexModule {
 
   private alertService = new AlertService();
   public activeTaskOrderNumber = "";
+  public activeTaskOrderSysId = "";
   
   public alerts: AlertDTO[]= [];
   currentPortfolio: Portfolio = { 
@@ -243,8 +338,38 @@ export class PortfolioDataStore extends VuexModule {
     provisioned: "",
     members: [],
     taskOrderNumber: "",
+    environments: [],
+    lastUpdated: "",
   }
-   
+
+  public blankEnvironment: Environment = {
+    csp: "",
+    csp_id: "",
+    csp_display: "",
+    name: "",
+    dashboard_link: "",
+    pending_operators: [],
+    portfolio: "",
+    provisioned: "",
+    provisioned_date: "",
+    provisioning_failure_cause: "",
+    provisioning_request_date: "",
+    csp_admins: [],
+    environmentStatus: "",
+  }  
+
+  public currentPortfolioEnvSysId = "";
+  @Action({rawError: true})
+  public async setCurrentEnvSysId(sysId: string): Promise<void> {
+    this.doSetCurrentEnvSysId(sysId);
+  }
+  @Mutation
+  public doSetCurrentEnvSysId(sysId: string): void {
+    this.currentPortfolioEnvSysId = sysId;
+  }
+
+
+
   public summaryFilterRoles: FilterOption[] = [
     {
       label: "All of my portfolios",
@@ -334,7 +459,8 @@ export class PortfolioDataStore extends VuexModule {
 
   @Action({rawError: true}) 
   public async setPortfolioProvisioning(data: PortfolioProvisioning): Promise<void> {
-    this.doSetPortfolioProvisioning(data);
+    await this.doSetPortfolioProvisioning(data);
+    await this.setCSPProvisioningData();
   }
 
   @Mutation
@@ -353,7 +479,6 @@ export class PortfolioDataStore extends VuexModule {
         csps: [],
       }
     );  
-
   }
 
   @Action
@@ -392,7 +517,11 @@ export class PortfolioDataStore extends VuexModule {
 
   @Action
   public async setCurrentPortfolio(portfolioData: PortfolioCardData): Promise<void> {
-    this.doSetCurrentPortfolio(portfolioData);
+    await this.doSetCurrentPortfolio(portfolioData);
+    const env = portfolioData.environments ? portfolioData.environments[0] : null;
+    if (env && env.sys_id) {
+      await this.setCurrentEnvSysId(env.sys_id);
+    }
   }
 
   @Mutation
@@ -404,22 +533,22 @@ export class PortfolioDataStore extends VuexModule {
       status: portfolioData.status,
       csp: portfolioData.csp,
       agency: portfolioData.agency,
+      agencyDisplay: portfolioData.agencyDisplay,
       taskOrderNumber: portfolioData.taskOrderNumber,
+      taskOrderSysId: portfolioData.taskOrderSysId,
+      portfolio_managers: portfolioData.portfolio_managers,
+      portfolio_managers_detail: portfolioData.portfolio_managers_detail,
+      portfolio_viewers: portfolioData.portfolio_viewers,
+      portfolio_viewers_detail: portfolioData.portfolio_viewers_detail,
+      members: portfolioData.members,
+      environments: portfolioData.environments,
+      lastUpdated: portfolioData.lastUpdated,
+      createdBy: portfolioData.createdBy
     };
     Object.assign(this.currentPortfolio, dataFromSummaryCard);
     this.activeTaskOrderNumber = portfolioData.taskOrderNumber 
       ? portfolioData.taskOrderNumber : "";
-  }
-
-  @Action
-  public setActiveTaskOrderNumber(taskOrderNum: string | undefined): void {
-    if (taskOrderNum) {
-      this.doSetActiveTaskOrderNumber(taskOrderNum);
-    }
-  }
-  @Mutation
-  public doSetActiveTaskOrderNumber(taskOrderNum: string): void {
-    this.activeTaskOrderNumber = taskOrderNum;
+    this.activeTaskOrderSysId = portfolioData.taskOrderSysId ? portfolioData.taskOrderSysId : "";
   }
 
   @Action
@@ -446,40 +575,253 @@ export class PortfolioDataStore extends VuexModule {
     this.alerts = value;
   }
 
+  /**
+   * Populates the portfolio members detail for the portfolio managers and viewers.
+   * After populating, the list gets sorted by the user's name.
+   */
   @Action({rawError: true})
-  public async saveMembers(newMembers: MemberInvites): Promise<void> {
-    newMembers.emails.forEach((email) => {
-      const newMember: User = {
-        firstName: "",
-        lastName: "",
-        email,
-        role: newMembers.role,
-      };
-      this.currentPortfolio.members?.push(newMember);
-      // TODO: AT-8747 - CREATE/UPDATE USER TO SNOW
-      // in x_g_dis_atat_portfolio - either portfolio_managers or portfolio_viewers
-      // depending on role
+  public async populatePortfolioMembersDetail(portfolio: Portfolio): Promise<Portfolio> {
+    const userSysIds = portfolio.portfolio_managers + "," + portfolio.portfolio_viewers;
+    const allMembersDetailListDTO = await api.userTable.getUsersBySysId(userSysIds);
+
+    const allMembersDetailList: User[] = 
+      allMembersDetailListDTO.map((userSearchDTO: UserSearchResultDTO) => {
+        return {
+          sys_id: userSearchDTO.sys_id,
+          firstName: userSearchDTO.first_name,
+          lastName: userSearchDTO.last_name,
+          fullName: userSearchDTO.name,
+          email: userSearchDTO.email,
+          phoneNumber: userSearchDTO.phone,
+          agency: userSearchDTO.company
+        }
+      })
+    portfolio.portfolio_managers_detail = [];
+    portfolio.portfolio_viewers_detail = [];
+    portfolio.members = [];
+    allMembersDetailList.forEach(member => {
+      if (portfolio.portfolio_managers?.indexOf(member.sys_id as string) !== -1) {
+        member.role = "Manager";
+        portfolio.portfolio_managers_detail?.push(member);
+        
+      } else {
+        member.role = "Viewer";
+        portfolio.portfolio_viewers_detail?.push(member);
+      }
+      portfolio.members?.push(member);
+    })
+    portfolio.members?.sort((a, b) => {
+      if (a.fullName && b.fullName) {
+        return a.fullName > b.fullName ? 1 : -1;
+      } else {
+        return 0;
+      }
     });
+    if (portfolio.createdBy) {
+      const createdByUser = await api.userTable.search(portfolio.createdBy);
+      this.doSetPortfolioCreator(createdByUser[0]);
+    }
+    return portfolio;
+  }
+
+  public portfolioCreator: User = {};
+  @Mutation
+  public doSetPortfolioCreator(user: UserSearchResultDTO): void {
+    this.portfolioCreator = {
+      sys_id: user.sys_id,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      fullName: user.name,
+      email: user.email,
+      phoneNumber: user.phone,
+      agency: user.company
+    }
+  }
+
+  /**
+   * By updating the new members to the current portfolio, all the screen where current
+   * portfolio is used for display, will get auto refreshed.
+   */
+  @Mutation
+  public async doUpdateCurrentPortfolioMembers(newMembers: User[]): Promise<void> {
+    this.currentPortfolio.portfolio_managers_detail =
+      this.currentPortfolio.portfolio_managers_detail?.concat(
+        newMembers.filter(newMember => newMember.role === "Manager"))
+    this.currentPortfolio.portfolio_viewers_detail =
+      this.currentPortfolio.portfolio_viewers_detail?.concat(
+        newMembers.filter(newMember => newMember.role === "Viewer"))
+    this.currentPortfolio.members = this.currentPortfolio.members?.concat(newMembers);
+    this.currentPortfolio.portfolio_managers =
+      this.currentPortfolio.portfolio_managers_detail?.map(
+        managerDetail => managerDetail.sys_id).toString();
+    this.currentPortfolio.portfolio_viewers =
+      this.currentPortfolio.portfolio_viewers_detail?.map(
+        viewerDetail => viewerDetail.sys_id).toString();
+    this.currentPortfolio.members?.sort((a, b) => {
+      if (a.fullName && b.fullName) {
+        return a.fullName > b.fullName ? 1 : -1;
+      } else {
+        return 0;
+      }
+    })
+  }
+
+  /**
+   * Compiles a comma separated list of managers and viewers that is a union
+   * of new and existing members. Then saves the members to the Portfolio and then
+   * updates the current portfolio with the new members.
+   */
+  @Action({rawError: true})
+  public async inviteMembers(newMembers: User[]): Promise<void> {
+    const managersList = this.currentPortfolio.portfolio_managers_detail ?
+      this.currentPortfolio.portfolio_managers_detail.map(
+        manager => manager.sys_id) : [];
+    const viewersList = this.currentPortfolio.portfolio_viewers_detail ?
+      this.currentPortfolio.portfolio_viewers_detail.map(
+        viewer => viewer.sys_id) : [];
+    newMembers.forEach(newMember => {
+      if(newMember.role === "Manager") {
+        managersList.push(newMember.sys_id);
+      } else {
+        viewersList.push(newMember.sys_id);
+      }
+    })
+    const membersPayload = {
+      portfolio_managers: managersList.toString(),
+      portfolio_viewers: viewersList.toString()
+    }
+    await api.portfolioTable.update(this.currentPortfolio.sysId as string,
+      membersPayload as PortfolioSummaryDTO);
+    await this.doUpdateCurrentPortfolioMembers(newMembers);
+  }
+
+  /**
+   * Loads all the operators of a portfolio and then groups them by environment. Then
+   * makes a call-out to sort the operators by each environment.
+   */
+  @Action({rawError: true})
+  public async loadAllOperatorsOfPortfolioEnvironment(environment: EnvironmentDTO): Promise<void> {
+    if (!environment.csp_admins || environment.csp_admins.length === 0) {
+      const queryForAllOperatorsOfPortfolio: AxiosRequestConfig = {
+        params: {
+          sysparm_query: "^environmentIN" + environment.sys_id
+        }
+      };
+      let allOperatorsOfPortfolioEnv = await api.operatorTable.getQuery(
+        queryForAllOperatorsOfPortfolio
+      );
+      allOperatorsOfPortfolioEnv.forEach(async (operator: OperatorDTO): Promise<void> => {
+        operator = convertColumnReferencesToValues(operator)        
+        await this.transformAndAddOperatorToPortfolioEnvironment({
+          environment: environment,
+          operatorDTO: operator
+        })
+      }, this)
+
+      await this.sortPortfolioEnvironmentOperators(environment);
+    }
+  }
+
+  /**
+   * Adds the new operator to the operators list of the environment of the
+   * current portfolio. It is the responsibility of the caller to ensure that
+   * this is not a duplicate entry.
+   */
+  @Mutation
+  public async transformAndAddOperatorToPortfolioEnvironment(
+    newOperatorToTransform: {
+      environment: EnvironmentDTO,
+      operatorDTO: OperatorDTO
+    }): Promise<void> {
+    const operatorDTO = newOperatorToTransform.operatorDTO;
+    let operatorStatus: Operator["status"] = "";
+    if (operatorDTO.provisioned === "false" &&
+      operatorDTO.provisioning_failure_cause?.trim().length === 0) {
+      operatorStatus = "Processing"
+    } else if (operatorDTO.provisioned === "false" &&
+      operatorDTO.provisioning_failure_cause &&
+      operatorDTO.provisioning_failure_cause.length > 0) {
+      operatorStatus = "Failed"
+    } else if (operatorDTO.provisioned === "true") {
+      operatorStatus = "Provisioned"
+    }
+    
+    // Business rules require status of Processing to be listed first.
+    // Vuetify table sort decending puts empty values at end. 
+    // Add date of tomorrow to Processing operators. Date will be hidden
+    // with logic from the table. This will allow desired sorting.
+    const pDate = operatorStatus === "Processing"
+      ? formatISO9075(new Date(startOfTomorrow()))
+      : operatorDTO.provisioned_date;
+
+    const operator: Operator = {
+      sysId: operatorDTO.sys_id,
+      environment: operatorDTO.environment,
+      email: operatorDTO.email,
+      dodId: operatorDTO.dod_id,
+      status: operatorStatus,
+      addedBy: operatorDTO.added_by,
+      provisionedDate: pDate,
+      provisioned: operatorDTO.provisioned,
+      provisioningFailureCause: operatorDTO.provisioning_failure_cause,
+      provisioningRequestDate: operatorDTO.provisioning_request_date
+    }
+    if (!newOperatorToTransform.environment.csp_admins) {
+      newOperatorToTransform.environment.csp_admins = [];
+    }
+    newOperatorToTransform.environment.csp_admins.unshift(operator);
+  }
+
+  /**
+   * Sorts the operators (or cspAdmins) of a specific environment of the portfolio. Here are the
+   * sorting rules.
+   * Descending by provisioned date BUT must list all with status Processing first
+   * alphabetically by email, then sort by Provisioned on date.
+   */
+  @Mutation
+  public async sortPortfolioEnvironmentOperators(environment: EnvironmentDTO): Promise<void> {
+    environment.csp_admins?.sort((a, b) => {
+      const operatorA = a as unknown as Operator;
+      const operatorB = b as unknown as Operator;
+      // sort by provisioned date
+      if (operatorA.provisionedDate && operatorB.provisionedDate) {
+        return operatorB.provisionedDate > operatorA.provisionedDate ? -1 : 1;
+      } else {
+        return 0;
+      }
+    })
+  }
+
+  /**
+   * Expects to get one of the environments from the current portfolio of this
+   * store, to which the new operator needs to be added.
+   */
+  @Action({rawError: true})
+  public async addCSPOperator(newOperatorToAdd: {environment: EnvironmentDTO,
+    operator: Operator}): Promise<void> {
+    const newOperator = newOperatorToAdd.operator;
+    const operatorDTO: OperatorDTO = {
+      environment: newOperatorToAdd.environment.sys_id,
+      email: newOperator.email,
+      dod_id: newOperator.dodId,
+      // created_by is DB connection specific. Added by should be pulled from current user
+      added_by: CurrentUserStore.currentUser.sys_id,
+      provisioned_date: "",
+      provisioned: "false",
+      provisioning_failure_cause: "",
+      provisioning_request_date: new Date().getUTCDate().toString()
+    }
+    const operatorResponse = await api.operatorTable.create(operatorDTO);
+    await this.transformAndAddOperatorToPortfolioEnvironment(
+      {
+        environment: newOperatorToAdd.environment,
+        operatorDTO: operatorResponse
+      });
+    await this.sortPortfolioEnvironmentOperators(newOperatorToAdd.environment);
   }
 
   @Action({rawError: true})
   public async getPortfolioData(): Promise<Portfolio> {
-    // TODO: can likely remove logic below to add current user as Manager if no members
-    // after AT-8747 is completed
-    if (this.currentPortfolio.members?.length === 0) {
-      const currentUser = await CurrentUserStore.getCurrentUser();
-      const placeholderMember = {
-        firstName: currentUser.first_name,
-        lastName: currentUser.last_name,
-        email: currentUser.email,
-        role: "Manager",
-        phoneNumber: "5555555555",
-        phoneExt: "1234",
-        designation: "Civilian",
-        agency: "U.S. Army"
-      };
-      this.currentPortfolio.members = [placeholderMember];
-    }
     return this.currentPortfolio;
   }
 
@@ -588,6 +930,7 @@ export class PortfolioDataStore extends VuexModule {
     this.portfolioProvisioningObj = _.cloneDeep(initialPortfolioProvisioningObj());
     this.didNotUseDAPPS = false;
     this.showTOPackageSelection = true;
+    this.portfolioCreator = {};
   }
 
 }
