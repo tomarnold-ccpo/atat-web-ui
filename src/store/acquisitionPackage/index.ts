@@ -1077,6 +1077,7 @@ export class AcquisitionPackageStore extends VuexModule {
   
   @Mutation
   public async doSetFairOpportunity(value: FairOpportunityDTO): Promise<void> {
+
     this.fairOpportunity = this.fairOpportunity
       ? Object.assign(this.fairOpportunity, value)
       : value;
@@ -1461,7 +1462,7 @@ export class AcquisitionPackageStore extends VuexModule {
     if (acquisitionPackage) {
       acquisitionPackage = convertColumnReferencesToValues(acquisitionPackage)
 
-      if (!this.currentUser) {
+      if (Object.keys(this.currentUser).length === 0) {
         await this.setCurrentUser();
       }  
       await ContactData.initialize();
@@ -1773,6 +1774,7 @@ export class AcquisitionPackageStore extends VuexModule {
       this.setInitialized(true);
       this.setIsLoading(false);
       await Summary.validateStepThree();
+      await Summary.validateStepFive();
       await Summary.validateStepSeven();
 
     } else {
@@ -1795,7 +1797,7 @@ export class AcquisitionPackageStore extends VuexModule {
     this.setIsLoading(true);
     this.setPackagePercentLoaded(0);
     Steps.clearAltBackButtonText();
-    if (!this.currentUser) {
+    if (Object.keys(this.currentUser).length === 0) {
       await this.setCurrentUser();
     }
 
