@@ -2,7 +2,7 @@
   <v-container fluid class="container-max-width">
     
     <h1 class="page-header">Let’s find out about the primary point of contact for this 
-      requirement Hello World</h1>
+      requirement Hello</h1>
     <ATATRadioGroup
       legend="hat role best describes your affiliation with the DoD?"
       id="ContactRole"
