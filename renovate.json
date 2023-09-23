@@ -4,6 +4,7 @@
     "config:base",
     "config:recommended"
   ],
+  "dependencyDashboard":true,
   "packageRules": [{
     "groupName": "definitelyTyped",
     "matchPackagePrefixes": [
@@ -56,6 +57,6 @@
   "minimumReleaseAge" : "3 days"
 },
 "schedule": [
-  "before 6am on Monday"
+  "every day"
 ]
 }
