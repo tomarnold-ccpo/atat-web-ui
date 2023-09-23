@@ -1,0 +1,61 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    "config:recommended"
+  ],
+  "packageRules": [{
+    "groupName": "definitelyTyped",
+    "matchPackagePrefixes": [
+      "@types/"
+    ]
+  },
+  {
+    "groupName": "cypress",
+    "matchPackagePrefixes": [
+      "cypress-",
+      "@t4w/"
+    ]
+  },
+  {
+    "groupName": "vue",
+    "matchPackagePrefixes": [
+      "vue",
+      "@vue/"
+    ]
+  },
+  {
+    "groupName": "jest",
+    "matchSourceUrls": [
+      "https://github.com/kulshekhar/ts-jest"
+    ],
+    "matchPackageNames": [
+      "@types/jest"
+    ],
+    "matchUpdateTypes": [
+      "patch",
+      "minor",
+      "major"
+    ]
+  },
+  {
+    "groupName": "linters",
+    "extends": "packages:linters"
+  },
+  {
+    "groupName": "vue monorepo",
+    "extends": "monorepo:vue",
+    "matchUpdateTypes": [
+      "patch",
+      "minor",
+      "major"
+    ]
+  } 
+],
+"npm": {
+  "minimumReleaseAge" : "3 days"
+},
+"schedule": [
+  "before 6am every other Monday"
+]
+}
