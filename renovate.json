@@ -57,6 +57,6 @@
   "minimumReleaseAge" : "3 days"
 },
 "schedule": [
-  "every day"
+  "before 8am"
 ]
 }
