@@ -62,9 +62,9 @@
   },
   "devDependencies": {
     "@4tw/cypress-drag-drop": "^2.1.0",
-    "@babel/core": "7.17.9",
+    "@babel/core": "7.23.0",
     "@babel/eslint-parser": "^7.18.2",
-    "@babel/generator": "7.17.9",
+    "@babel/generator": "7.23.0",
     "@testing-library/jest-dom": "^5.16.5",
     "@types/inputmask": "^5.0.3",
     "@types/jest": "^24.0.19",
