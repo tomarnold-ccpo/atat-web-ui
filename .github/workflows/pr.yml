@@ -68,6 +68,8 @@ jobs:
       - name: Set Version Variable - Non-release
         run: echo "VERSION=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+      - name: Test Version Number
+        run: echo "${{ env.VERSION }}"
       - name: Setup NodeJS
         uses: actions/setup-node@v3
         with:
