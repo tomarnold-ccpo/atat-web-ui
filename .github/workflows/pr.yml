@@ -20,11 +20,11 @@ jobs:
     if: ${{ !startsWith(github.ref, 'refs/tags/') }} # don't need this for tag pushes
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Check package-lock.json
         run: |
           file="package-lock.json"
-          expectedVersion="2"
+          expectedVersion="3"
           lockFileVersion="$(jq -r .lockfileVersion "$file")"
           if [ "$lockFileVersion" != "$expectedVersion" ]; then
             echo "$file: lockfileVersion ($lockFileVersion) is invalid (expected: $expectedVersion)"
@@ -38,11 +38,11 @@ jobs:
     if: ${{ !startsWith(github.ref, 'refs/tags/') }} # don't need this for tag pushes
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup NodeJS
         uses: actions/setup-node@v3
         with:
-          node-version: 16.10.0
+          node-version: 18
           cache: npm
       - name: Install project dependencies
         run: npm ci
@@ -53,33 +53,48 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # Sonar Scanner requires full history for blame information
           fetch-depth: 0
+      - name: 'Get Previous tag'
+        id: previoustag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+      - name: Set Version Variable - Release
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }} 
+        env:
+          VERSION: echo "VERSION=${{ steps.previoustag.outputs.tag }}" >> "$GITHUB_ENV"
+      - name: Set Version Variable - Non-release
+        run: echo "VERSION=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
       - name: Setup NodeJS
         uses: actions/setup-node@v3
         with:
-          node-version: 16.10.0
+          node-version: 18
           cache: npm
       - name: Install project dependencies
         run: npm ci
       - name: Build the project
         run: npm run build
         env:
-          testURL: "${{ secrets.VUE_BASE_API_URL }}/test"
-          BASE_API_URL: "${{ secrets.VUE_BASE_API_URL }}"
+          testURL: "%BASE_URL_PLACEHOLDER%/test"
+          BASE_API_URL: "%BASE_URL_PLACEHOLDER%"
           SNOWUSER: "${{ secrets.VUE_SNOW_USER }}"
           SNOWPASS: ""
+          VERSION: "${{ env.VERSION }}"
       - name: Test the project
         run: npm run test
         if: ${{ !startsWith(github.ref, 'refs/tags/') }} # don't need this for tag pushes
-      #- name: Trigger SonarCloud
-      #  uses: SonarSource/sonarcloud-github-action@master
-      #  if: ${{ !startsWith(github.ref, 'refs/tags/') }} # don't need this for tag pushes
-      #  env:
-      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Trigger SonarCloud
+        uses: SonarSource/sonarcloud-github-action@master
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }} # don't need this for tag pushes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Create SBOM
+        run: |
+            find dist/ -type f > dist/sbom.txt
       - name: Preserve build artifact
         uses: actions/upload-artifact@v3
         with:
@@ -97,7 +112,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.WORKFLOWS_PAT }}
           files: |
             release.zip
 
@@ -107,7 +122,7 @@ jobs:
     if: ${{ !startsWith(github.ref, 'refs/tags/') }} # don't need this for tag pushes
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Setup Python
