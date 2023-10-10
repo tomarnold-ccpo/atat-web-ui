@@ -64,7 +64,7 @@ jobs:
         uses: "WyriHaximus/github-action-get-previous-tag@v1"
         if: ${{ !startsWith(github.ref, 'refs/tags/v') }} 
         env:
-          VERSION: echo "VERSION=${{ steps.previoustag.outputs.tag }}" >> $GITHUB_OUTPUT
+          VERSION: echo "VERSION=${{ steps.previoustag.outputs.tag }}" >> $GITHUB_ENV
       - name: Set Version Variable - Non-release
         run: echo "VERSION=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
